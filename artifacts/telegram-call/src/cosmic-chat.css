@@ -1,0 +1,86 @@
+
+/* NAFSAM / CELESTIAL CHAT — matching the main site's nighttime identity.
+   Overrides tg.css without changing ChatProvider, Supabase, voice or composer behavior. */
+:root{
+  --tg-blue:#a8e5f6;
+  --tg-blue-deep:#78b9e1;
+  --tg-bg:#050c19;
+  --tg-card:#0d1b31;
+  --tg-sep:rgba(167,221,251,.15);
+  --tg-text:#edf5ff;
+  --tg-subtext:#97acc7;
+  --tg-status:#8fdac8;
+  --tg-bar-bg:rgba(6,17,34,.9);
+}
+html,body,#root{color:var(--tg-text);background:#040b17}
+.tg-root{isolation:isolate;background:
+  radial-gradient(ellipse 75% 48% at 12% 0%,rgba(49,79,173,.24),transparent 74%),
+  radial-gradient(ellipse 50% 70% at 100% 85%,rgba(74,90,154,.15),transparent 70%),
+  #040b17}
+.tg-root:before{content:'';position:absolute;inset:0;pointer-events:none;z-index:0;opacity:.21;
+  background-image:linear-gradient(rgba(154,203,250,.12) 1px,transparent 1px),linear-gradient(90deg,rgba(154,203,250,.12) 1px,transparent 1px);
+  background-size:60px 60px}
+.tg-login{background:transparent!important;position:relative;z-index:1;color:var(--tg-text)}
+.tg-login-logo{border:1px solid rgba(151,225,255,.5);
+  background:radial-gradient(circle at 30% 20%,#224a74,#0a1b3b 65%,#060e1f)!important;
+  box-shadow:0 0 90px rgba(80,165,240,.16),0 0 0 18px rgba(135,210,255,.035)!important}
+.tg-login-title{color:#f0f6ff!important;font-family:'Cairo','Inter',sans-serif!important;font-weight:500!important;
+  letter-spacing:.02em}
+.tg-login-sub{color:#a1b6ce!important;line-height:1.85}
+.tg-login-input{background:rgba(18,38,62,.83)!important;border:1px solid rgba(166,221,253,.24)!important;
+  border-radius:14px!important;color:#e6f5ff!important;min-height:49px}
+.tg-login-input:focus{outline:2px solid rgba(173,231,251,.34);outline-offset:2px}
+.tg-login-btn{background:linear-gradient(120deg,#d4f5ff,#8ecbdf)!important;color:#061421!important;
+  border-radius:13px!important;box-shadow:0 12px 36px rgba(77,169,234,.18)}
+.tg-chat-page{background:#050c19!important;color:var(--tg-text)}
+.tg-chat-bg{background:
+  radial-gradient(ellipse 55% 40% at 20% 0%,rgba(53,94,177,.24),transparent 70%),
+  radial-gradient(ellipse 70% 55% at 100% 95%,rgba(47,91,137,.18),transparent 80%),
+  linear-gradient(145deg,#040b17,#0b172c 56%,#040b17)!important}
+.tg-chat-bg:after{content:'';position:absolute;inset:0;opacity:.12;background-image:
+  linear-gradient(rgba(147,214,249,.2) 1px,transparent 1px),
+  linear-gradient(90deg,rgba(147,214,249,.2) 1px,transparent 1px);
+  background-size:64px 64px;pointer-events:none}
+.tg-chat-header,.tg-contact-top-bar{background:rgba(6,17,34,.91)!important;
+  border-bottom:1px solid var(--tg-sep)!important;
+  -webkit-backdrop-filter:blur(20px) saturate(140%);backdrop-filter:blur(20px) saturate(140%)}
+.tg-chat-peer-name,.tg-contact-name{color:#eef6ff!important;font-weight:600}
+.tg-icon-btn,.tg-chat-back,.tg-contact-back{color:#b3e8f9!important}
+.tg-chat-messages{scrollbar-color:rgba(144,204,245,.25) transparent}
+.tg-chat-day{border:1px solid rgba(185,233,254,.12);background:rgba(18,39,71,.75)!important;
+  color:#acc6e3;font:500 11px 'Inter',sans-serif;letter-spacing:.1em}
+.tg-bubble{border-radius:18px!important;box-shadow:0 9px 27px rgba(1,8,24,.18)!important;line-height:1.6}
+.tg-bubble--in{border:1px solid rgba(164,223,250,.15);background:rgba(15,32,57,.93)!important;color:#e3f2ff!important}
+.tg-bubble--out{border:1px solid rgba(186,231,254,.23);
+  background:linear-gradient(135deg,#193e65,#286086)!important;color:#f0fbff!important}
+.tg-bubble-meta{color:#b3d2e7!important}
+.tg-composer{border-top:1px solid var(--tg-sep)!important;background:rgba(5,15,31,.91)!important;
+  -webkit-backdrop-filter:blur(20px) saturate(140%);backdrop-filter:blur(20px) saturate(140%)}
+.tg-composer-input{background:rgba(14,33,57,.91)!important;border:1px solid rgba(169,226,255,.17)!important;
+  color:#eaf6ff!important;border-radius:19px!important}
+.tg-composer-input:focus{border-color:rgba(171,228,252,.42)!important}
+.tg-composer-send{background:linear-gradient(145deg,#c6f1ff,#8dcfe8)!important;color:#061625!important}
+.tg-composer-attach,.tg-composer-emoji,.tg-composer-mic{color:#acdff3!important}
+.tg-contact-page{background:transparent!important;color:var(--tg-text)}
+.tg-contact-body,.tg-info-section{background:transparent!important}
+.tg-info-row,.tg-call-row{border-color:var(--tg-sep)!important}
+.tg-info-value,.tg-info-label{color:#dceafa!important}
+.tg-call-bg{background:
+  radial-gradient(ellipse at 30% 12%,rgba(63,126,206,.32),transparent 59%),
+  radial-gradient(ellipse at 77% 77%,rgba(117,98,206,.20),transparent 65%),
+  linear-gradient(155deg,#020a1a,#101f3b 50%,#030917)!important}
+.tg-call-name{color:#f2f7ff!important;text-shadow:0 6px 45px rgba(0,0,0,.22)}
+.tg-call-encryption{background:rgba(179,226,254,.07)!important;border:1px solid rgba(179,226,254,.12)}
+.tg-call-controls{backdrop-filter:blur(12px)}
+.tg-avatar{border:1px solid rgba(181,230,250,.2);box-shadow:0 14px 56px rgba(0,0,0,.25)}
+.tg-overlay{backdrop-filter:blur(15px)}
+.tg-lightbox{background:rgba(2,8,19,.97)!important}
+@media(max-width:600px){
+  .tg-bubble{max-width:85%!important}
+  .tg-login-logo{width:80px;height:80px}
+  .tg-login-form{max-width:min(350px,calc(100vw - 34px))}
+  .tg-chat-messages{padding-inline:9px}
+}
+@media(prefers-reduced-motion:reduce){
+  .tg-bubble,.tg-call-bg,.tg-pulse-ring{animation:none!important;transition:none!important}
+}

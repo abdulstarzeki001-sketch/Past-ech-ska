@@ -7,6 +7,7 @@ import {
   useState,
 } from "react";
 import "./tg.css";
+import "./cosmic-chat.css";
 import { ChatProvider } from "./chat/ChatProvider";
 import { useChat, type ChatMessage } from "./chat/chatContext";
 import {
