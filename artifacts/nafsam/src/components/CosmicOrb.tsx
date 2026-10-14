@@ -23,8 +23,12 @@ function Orb() {
     if (!group.current) return;
     const step = Math.min(delta, 0.05);
     group.current.rotation.y += step * 0.085;
-    group.current.rotation.z = Math.sin(state.clock.elapsedTime * 0.14) * 0.085;
-    group.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.12) * 0.1;
+    // Subtle physically smoothed pointer response, only on WebGL-capable desktop.
+    const targetX = Math.sin(state.clock.elapsedTime * 0.12) * 0.07 + state.pointer.y * -0.18;
+    const targetZ = Math.sin(state.clock.elapsedTime * 0.14) * 0.07 + state.pointer.x * 0.16;
+    const damping = 1 - Math.exp(-Math.min(delta, 0.05) * 3.5);
+    group.current.rotation.x += (targetX - group.current.rotation.x) * damping;
+    group.current.rotation.z += (targetZ - group.current.rotation.z) * damping;
   });
 
   return (
