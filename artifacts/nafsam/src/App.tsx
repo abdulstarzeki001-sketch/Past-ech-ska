@@ -8,13 +8,11 @@ import {
 } from "wouter";
 import { useLang } from "@/hooks/useLang";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
-import Rain from "@/components/Rain";
-import FloatingHearts from "@/components/FloatingHearts";
-import DustParticles from "@/components/DustParticles";
 import { useMagneticButtons } from "@/hooks/useMagneticButtons";
 import { useIdleVignette } from "@/hooks/useIdleVignette";
 import useScrollRestoration from "@/hooks/useScrollRestoration";
 import Navbar from "@/components/Navbar";
+import CinematicAtmosphere from "@/components/CinematicAtmosphere";
 import Login from "@/pages/Login";
 import {
   fetchSession,
@@ -228,10 +226,8 @@ function AppContent() {
   );
 
   return (
-    <div className="app-shell">
-      <Rain />
-      <FloatingHearts />
-      <DustParticles />
+    <div className="app-shell cosmic-ui">
+      <CinematicAtmosphere />
       <LanguageSwitcher lang={lang} setLang={setLang} />
       {body}
     </div>
