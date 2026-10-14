@@ -30,7 +30,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: pnpm
 
       - name: Install dependencies
@@ -38,12 +38,12 @@ jobs:
 
       - name: Build main site
         env:
-          BASE_PATH: /ech-nafasm-ska/
+          BASE_PATH: /Past-ech-ska/
         run: pnpm --filter @workspace/nafsam run build
 
       - name: Build Telegram app
         env:
-          BASE_PATH: /ech-nafasm-ska/telegram-call/
+          BASE_PATH: /Past-ech-ska/telegram-call/
         run: pnpm --filter @workspace/telegram-call run build
 
       - name: Assemble GitHub Pages site
