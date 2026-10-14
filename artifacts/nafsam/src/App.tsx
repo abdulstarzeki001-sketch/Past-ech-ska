@@ -1,7 +1,5 @@
 import { useState, useEffect, useRef, lazy, Suspense } from "react";
 import {
-  Switch,
-  Route,
   Router as WouterRouter,
   useLocation,
   Redirect,
@@ -12,6 +10,7 @@ import { useMagneticButtons } from "@/hooks/useMagneticButtons";
 import { useIdleVignette } from "@/hooks/useIdleVignette";
 import useScrollRestoration from "@/hooks/useScrollRestoration";
 import Navbar from "@/components/Navbar";
+import CinematicPageTransition from "@/components/CinematicPageTransition";
 import CinematicAtmosphere from "@/components/CinematicAtmosphere";
 import Login from "@/pages/Login";
 import {
@@ -172,55 +171,53 @@ function AppContent() {
     };
   }, []);
 
+  const renderCurrentPage = () => {
+    switch (location) {
+      case "/":
+        return <Login t={t} lang={lang} onAuth={() => setAuthState("authed")} />;
+      case "/home":
+        return <ProtectedRoute state={authState}><Home t={t} lang={lang} /></ProtectedRoute>;
+      case "/photos":
+        return <ProtectedRoute state={authState}><Photos t={t} lang={lang} /></ProtectedRoute>;
+      case "/journey":
+        return <ProtectedRoute state={authState}><Journey t={t} lang={lang} /></ProtectedRoute>;
+      case "/songs":
+        return <ProtectedRoute state={authState}><Songs t={t} lang={lang} /></ProtectedRoute>;
+      case "/videos":
+        return <ProtectedRoute state={authState}><Videos t={t} lang={lang} /></ProtectedRoute>;
+      case "/writings":
+        return <ProtectedRoute state={authState}><Writings t={t} lang={lang} /></ProtectedRoute>;
+      case "/feelings":
+        return <ProtectedRoute state={authState}><Feelings t={t} lang={lang} /></ProtectedRoute>;
+      default:
+        return <Redirect to="/" />;
+    }
+  };
+
+  const currentPage = renderCurrentPage();
+
   const body = (
     <>
       {authState === "authed" && (
         <Navbar t={t} lang={lang} onLogout={handleLogout} />
       )}
-      <main>
-        <Switch>
-          <Route path="/">
-            <Login t={t} lang={lang} onAuth={() => setAuthState("authed")} />
-          </Route>
-          <Route path="/home">
-            <ProtectedRoute state={authState}>
-              <Home t={t} lang={lang} />
-            </ProtectedRoute>
-          </Route>
-          <Route path="/photos">
-            <ProtectedRoute state={authState}>
-              <Photos t={t} lang={lang} />
-            </ProtectedRoute>
-          </Route>
-          <Route path="/journey">
-            <ProtectedRoute state={authState}>
-              <Journey t={t} lang={lang} />
-            </ProtectedRoute>
-          </Route>
-          <Route path="/songs">
-            <ProtectedRoute state={authState}>
-              <Songs t={t} lang={lang} />
-            </ProtectedRoute>
-          </Route>
-          <Route path="/videos">
-            <ProtectedRoute state={authState}>
-              <Videos t={t} lang={lang} />
-            </ProtectedRoute>
-          </Route>
-          <Route path="/writings">
-            <ProtectedRoute state={authState}>
-              <Writings t={t} lang={lang} />
-            </ProtectedRoute>
-          </Route>
-          <Route path="/feelings">
-            <ProtectedRoute state={authState}>
-              <Feelings t={t} lang={lang} />
-            </ProtectedRoute>
-          </Route>
-          <Route>
-            <Redirect to="/" />
-          </Route>
-        </Switch>
+      <main id="main-content">
+        <CinematicPageTransition
+          location={location}
+          enabled={authState === "authed"}
+          routeLabel={{
+            "/": t.page_title_login,
+            "/home": t.nav_home,
+            "/photos": t.nav_photos,
+            "/journey": t.nav_journey,
+            "/songs": t.nav_songs,
+            "/videos": t.nav_videos,
+            "/writings": t.nav_writings,
+            "/feelings": t.nav_feelings,
+          }[location] ?? t.brand}
+        >
+          {currentPage}
+        </CinematicPageTransition>
       </main>
     </>
   );

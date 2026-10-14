@@ -7,6 +7,7 @@ import "./mobile-performance.css";
 import "./luxury-memory.css";
 import "./styles/tailwind.css";
 import "./styles/cinematic.css";
+import "./styles/cinematic-transitions.css";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

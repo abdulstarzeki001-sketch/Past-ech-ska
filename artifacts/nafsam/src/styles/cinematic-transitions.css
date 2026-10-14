@@ -1,0 +1,135 @@
+
+/* NAFSAM — cinematic route transitions / luminous navigation polish
+   The navigation transition animates only transform and opacity on mobile.
+   This layer is imported last and does not alter any private-media routes. */
+.cinema-page-viewport,
+.cinema-page-stage,
+.cinema-page-static{position:relative;width:100%;min-width:0}
+.cinema-page-stage{transform-origin:50% 9%;backface-visibility:hidden}
+.cinema-page-stage__sheen{
+  position:absolute;inset:0 0 auto;height:260px;z-index:0;pointer-events:none;
+  background:linear-gradient(180deg,rgba(121,208,255,.034),transparent 78%);
+  opacity:.85
+}
+.cinema-page-stage > .page-content,
+.cinema-page-stage > .videos-page,
+.cinema-page-stage > .feelings-page{position:relative;z-index:1}
+.cinema-route-beam{
+  position:fixed;z-index:1400;pointer-events:none;
+  inset:0 0 auto;height:2px;
+  overflow:hidden;opacity:.9
+}
+.cinema-route-beam>span{
+  display:block;width:35%;height:100%;
+  background:linear-gradient(90deg,transparent,#97e4ff 35%,#dec9ff 65%,transparent);
+  box-shadow:0 0 20px rgba(140,224,255,.78);
+  animation:cinema-beam-pass .6s cubic-bezier(.16,1,.3,1) both;
+}
+@keyframes cinema-beam-pass{from{transform:translate3d(-120%,0,0);opacity:0}16%{opacity:1}to{transform:translate3d(390%,0,0);opacity:0}}
+/* Fine architectural rules, legible hierarchy, restrained highlights */
+.cosmic-ui .cinema-header{
+  border-bottom:1px solid rgba(181,222,255,.13);
+  box-shadow:0 14px 45px rgba(0,0,0,.17),inset 0 1px 0 rgba(227,244,255,.04)
+}
+.cinema-brand__mark{
+  font-size:35px;
+  text-shadow:0 0 30px rgba(119,213,255,.2);
+  transition:text-shadow .35s ease
+}
+.cinema-brand:hover .cinema-brand__mark{text-shadow:0 0 35px rgba(160,233,255,.52)}
+.cinema-nav-desktop a{isolation:isolate;position:relative}
+.cinema-nav-desktop a::after{display:none!important}
+.cinema-nav-desktop__label{position:relative;z-index:1}
+.cinema-nav-desktop__light{
+  position:absolute;bottom:7px;left:7%;right:7%;height:2px;border-radius:6px;
+  background:linear-gradient(90deg,transparent,#aae8fa 28%,#baaafa 72%,transparent);
+  box-shadow:0 0 14px rgba(148,231,255,.68);
+  pointer-events:none;z-index:0
+}
+.cinema-mobile-dock__item{position:relative;isolation:isolate}
+.cinema-mobile-dock__item.is-active{background:transparent!important;box-shadow:none!important}
+.cinema-mobile-dock__light{
+  position:absolute;inset:3px 1px;
+  border:1px solid rgba(173,233,255,.21);
+  border-radius:11px;
+  background:linear-gradient(165deg,rgba(106,191,246,.17),rgba(135,122,234,.08));
+  box-shadow:inset 0 1px 0 rgba(217,245,255,.12),0 0 23px rgba(65,158,217,.09);
+  pointer-events:none;z-index:-1
+}
+.cinema-mobile-dock__item>svg,
+.cinema-mobile-dock__item>span:not(.cinema-mobile-dock__light){position:relative;z-index:1}
+.cosmic-ui .cinema-header__chat,
+.cosmic-ui .cinema-header__logout{
+  transition:transform .26s ease,background .26s ease,border-color .26s ease,box-shadow .26s ease
+}
+.cosmic-ui .cinema-header__chat:hover,
+.cosmic-ui .cinema-header__logout:hover{
+  transform:translateY(-2px);border-color:rgba(172,231,255,.5);
+  box-shadow:0 8px 27px rgba(96,191,234,.1)
+}
+.cosmic-ui .cinema-section-heading h2{letter-spacing:.006em}
+.cosmic-ui .cinema-section-number{display:inline-flex;align-items:center;gap:12px}
+.cosmic-ui .cinema-section-number::before{
+  content:'';display:inline-block;height:1px;width:30px;
+  background:linear-gradient(90deg,#abddf9,transparent)
+}
+.cosmic-ui .cinema-archive-card{
+  outline:1px solid transparent;
+  background:
+    radial-gradient(circle at 88% -10%,rgba(133,167,231,.12),transparent 57%),
+    linear-gradient(146deg,rgba(18,36,65,.68),rgba(6,14,29,.9));
+}
+.cosmic-ui .cinema-archive-card::after{
+  content:'';position:absolute;bottom:0;left:10%;right:10%;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(165,219,245,.26),transparent);
+  transform:scaleX(.2);opacity:.4;transition:transform .5s ease,opacity .5s ease
+}
+.cosmic-ui .cinema-archive-card:hover::after{transform:scaleX(1);opacity:1}
+.cosmic-ui .cinema-archive-card__icon{
+  backdrop-filter:blur(8px);
+  box-shadow:inset 0 1px 0 rgba(210,240,254,.09),0 8px 28px rgba(95,172,236,.07)
+}
+.cosmic-ui .cinema-archive-card__top{color:#9ab9d1}
+.cosmic-ui .cinema-archive-card h3{letter-spacing:.015em}
+.cosmic-ui .cinema-hero__title{
+  text-wrap:balance;
+  background:linear-gradient(145deg,#fff 6%,#d5eaff 50%,#bed1f6 92%);
+  -webkit-background-clip:text;background-clip:text;color:transparent!important
+}
+.cosmic-ui .page-header h1,
+.cosmic-ui .v-hero-title,
+.cosmic-ui .fl-hero-title{
+  text-wrap:balance;
+  background-image:linear-gradient(135deg,#f5fbff 20%,#b6d9f3 85%);
+  -webkit-background-clip:text;background-clip:text;
+  color:transparent!important;
+}
+.cosmic-ui .photo-card,
+.cosmic-ui .writing-card,
+.cosmic-ui .song-card,
+.cosmic-ui .v-card{isolation:isolate}
+.cosmic-ui .writing-card{
+  border-image:none;
+  box-shadow:0 15px 45px rgba(0,0,0,.22),inset 0 1px 0 rgba(215,239,255,.04)
+}
+.cosmic-ui .writing-card::after{
+  content:'';position:absolute;inset:9px;pointer-events:none;
+  border:1px solid rgba(195,223,248,.045);border-radius:12px
+}
+.cosmic-ui .photo-card .photo-img{transition:transform .65s cubic-bezier(.22,1,.36,1)}
+.cosmic-ui .v-card .v-play{box-shadow:0 12px 30px rgba(3,10,22,.38)}
+@media (max-width:960px){
+  .cinema-route-beam{height:1px}
+  .cosmic-ui .cinema-header__chat:hover,.cosmic-ui .cinema-header__logout:hover{transform:none}
+}
+@media (pointer:coarse){
+  .cinema-page-stage__sheen{display:none}
+  .cinema-route-beam>span{animation-duration:.36s}
+  .cosmic-ui .cinema-archive-card__icon{backdrop-filter:none}
+}
+@media (prefers-reduced-motion:reduce){
+  .cinema-route-beam{display:none!important}
+  .cinema-mobile-dock__light,
+  .cinema-nav-desktop__light{transition:none!important}
+  .cosmic-ui .cinema-archive-card::after{transition:none!important}
+}
