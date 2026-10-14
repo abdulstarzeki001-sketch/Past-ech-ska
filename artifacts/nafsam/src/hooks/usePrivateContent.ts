@@ -33,6 +33,7 @@ export interface MomentEntry {
 export interface SongItem {
   title: string;
   src: string;
+  thumb?: string;
 }
 
 export interface SpecialPhotoItem {
@@ -115,11 +116,13 @@ export interface FeelingsContent {
   endingLine?: string;
 }
 
+export type PageAudioEntry = string | { file: string; startAt?: number };
+
 export interface PageAudioMap {
-  home?: string;
-  moments?: string;
-  photos?: string;
-  writings?: string;
+  home?: PageAudioEntry;
+  moments?: PageAudioEntry;
+  photos?: PageAudioEntry;
+  writings?: PageAudioEntry;
 }
 
 export interface MediaConfig {

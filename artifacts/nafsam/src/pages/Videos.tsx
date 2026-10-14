@@ -6,6 +6,7 @@ import {
   type CSSProperties,
   type ReactNode,
 } from "react";
+import "@/styles/luxe-videos.css";
 import { type Translations, type Lang } from "@/i18n/translations";
 import PhotoBackdrop from "@/components/PhotoBackdrop";
 import {
@@ -16,6 +17,7 @@ import {
 import useReveal from "@/hooks/useReveal";
 import useNearViewport from "@/hooks/useNearViewport";
 import { mediaUrl, posterUrl, posterThumbUrl } from "@/lib/r2";
+import { logActivity } from "@/lib/activity";
 
 function RevealVideoCard({
   className = "",
@@ -55,8 +57,6 @@ interface Props {
 
 type VideoKind = "mp4" | "youtube" | "mega";
 
-const BATCH = 9;
-
 // On phones, skip the duplicate blurred-fill poster <img>. The card already
 // renders a contained foreground poster; rendering a second full poster per
 // card doubles decoded bitmaps and is a primary driver of the iOS OOM reload.
@@ -64,6 +64,8 @@ const PHONE =
   typeof window !== "undefined" && typeof window.matchMedia === "function"
     ? window.matchMedia("(max-width: 820px)").matches
     : false;
+
+const BATCH = PHONE ? 6 : 9;
 
 function detectKind(file: string): VideoKind {
   if (/youtube\.com|youtu\.be/i.test(file)) return "youtube";
@@ -202,7 +204,7 @@ function Thumb({ file, kind }: { file: string; kind: VideoKind }) {
   // posters are unmounted and their decoded bitmaps reclaimed — without this,
   // scrolling the gallery accumulates posters until iOS Safari OOM-reloads.
   const { ref, near } = useNearViewport<HTMLDivElement>({
-    rootMargin: "1200px 0px",
+    rootMargin: PHONE ? "600px 0px" : "1200px 0px",
   });
   if (kind !== "mp4") {
     return (
@@ -264,6 +266,10 @@ function Thumb({ file, kind }: { file: string; kind: VideoKind }) {
 export default function Videos({ t, lang }: Props) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [theaterMode, setTheaterMode] = useState(false);
+  // Native aspect ratio (w/h) of the active mp4, read from loadedmetadata.
+  // Drives orientation-aware modal sizing: portrait fills height, landscape
+  // fills width — no letterbox bars either way.
+  const [videoAR, setVideoAR] = useState<number | null>(null);
   const closeBtnRef = useRef<HTMLButtonElement>(null);
   const videoElRef = useRef<HTMLVideoElement>(null);
   const lastFocusedRef = useRef<HTMLElement | null>(null);
@@ -316,13 +322,21 @@ export default function Videos({ t, lang }: Props) {
     return () => cancelAnimationFrame(id);
   }, [visibleCount, videosData.length]);
 
-  const openModal = useCallback((index: number) => {
-    setActiveIndex(index);
-  }, []);
+  const openModal = useCallback(
+    (index: number) => {
+      setVideoAR(null);
+      setActiveIndex(index);
+      const v = videosData[index] as { caption?: string; title?: string; file?: string } | undefined;
+      const label = v?.caption || v?.title || v?.file || `video ${index + 1}`;
+      logActivity("video_open", label, { index });
+    },
+    [videosData],
+  );
 
   const closeModal = useCallback(() => {
     setActiveIndex(null);
     setTheaterMode(false);
+    setVideoAR(null);
   }, []);
 
   const toggleFullscreen = useCallback(() => {
@@ -356,6 +370,7 @@ export default function Videos({ t, lang }: Props) {
   }, []);
 
   const prevVideo = useCallback(() => {
+    setVideoAR(null);
     setActiveIndex((i) => {
       if (i === null || videosData.length === 0) return i;
       return (i - 1 + videosData.length) % videosData.length;
@@ -363,6 +378,7 @@ export default function Videos({ t, lang }: Props) {
   }, [videosData.length]);
 
   const nextVideo = useCallback(() => {
+    setVideoAR(null);
     setActiveIndex((i) => {
       if (i === null || videosData.length === 0) return i;
       return (i + 1) % videosData.length;
@@ -398,17 +414,47 @@ export default function Videos({ t, lang }: Props) {
   const activeCaption = active ? pickLocalized(active.caption, lang) : "";
   const activeQuote = active ? pickLocalized(active.quote, lang) : "";
 
+  // Orientation-aware modal sizing (mp4 only): the modal box width is derived
+  // from the video's native aspect ratio so a portrait clip stands tall and a
+  // landscape clip spreads wide — the video always shows FULL, no bars.
+  const isPortrait = videoAR !== null && videoAR < 0.95;
+  // Portrait reserves less vertical budget for the info strip (it scrolls),
+  // so tall clips open noticeably wider on phones — near full width on iPhone.
+  const fitBoxStyle: CSSProperties | undefined =
+    activeKind === "mp4" && videoAR !== null
+      ? {
+          width: `min(${theaterMode ? 1280 : isPortrait ? 600 : 900}px, calc(100vw - 24px), calc((100dvh - ${isPortrait ? 130 : 230}px) * ${videoAR.toFixed(4)}))`,
+          maxWidth: "none",
+        }
+      : undefined;
+  const fitMediaStyle: CSSProperties | undefined =
+    activeKind === "mp4" && videoAR !== null
+      ? { aspectRatio: `${videoAR.toFixed(4)}` }
+      : undefined;
+
   const featured = videosData[0] ?? null;
   const featuredKind: VideoKind = featured ? detectKind(featured.file) : "mp4";
   const featuredCaption = featured ? pickLocalized(featured.caption, lang) : "";
   const featuredQuote = featured ? pickLocalized(featured.quote, lang) : "";
-  const featuredPoster =
+  // Spotlight card: thumb-first like the grid (a full 720p+ poster decodes to
+  // several MB on iPhone); fall back to the full poster only if the thumb 404s.
+  const featuredPosterFull =
     featured && featuredKind === "mp4" ? buildPoster(featured.file) : "";
+  const featuredPosterThumb =
+    featured && featuredKind === "mp4" ? buildPosterThumb(featured.file) : "";
+  const [spotlightUseFull, setSpotlightUseFull] = useState(false);
+  const featuredPoster =
+    spotlightUseFull || !featuredPosterThumb
+      ? featuredPosterFull
+      : featuredPosterThumb;
 
   return (
     <div className="videos-page videos-luxe">
       <PhotoBackdrop />
       <section className="v-hero" dir="ltr">
+        <span className="v-sparkle s1" aria-hidden="true" />
+        <span className="v-sparkle s2" aria-hidden="true" />
+        <span className="v-sparkle s3" aria-hidden="true" />
         <h1 className="v-hero-title">{t.videos_title}</h1>
         {p.videos_text && <p className="v-hero-sub">{p.videos_text}</p>}
         <div className="v-hero-line" />
@@ -439,6 +485,15 @@ export default function Videos({ t, lang }: Props) {
                   loading="eager"
                   decoding="async"
                   draggable={false}
+                  onError={() => {
+                    if (
+                      !spotlightUseFull &&
+                      featuredPosterFull &&
+                      featuredPosterFull !== featuredPosterThumb
+                    ) {
+                      setSpotlightUseFull(true);
+                    }
+                  }}
                 />
               ) : (
                 <div className="v-thumb-fallback" aria-hidden="true" />
@@ -546,7 +601,10 @@ export default function Videos({ t, lang }: Props) {
             </>
           )}
 
-          <div className="v-modal-box">
+          <div
+            className={`v-modal-box${videoAR !== null && activeKind === "mp4" ? (isPortrait ? " v-box-portrait" : " v-box-landscape") : ""}`}
+            style={fitBoxStyle}
+          >
             <button
               ref={closeBtnRef}
               type="button"
@@ -557,7 +615,10 @@ export default function Videos({ t, lang }: Props) {
               <CloseIcon />
             </button>
 
-            <div className={`v-modal-media v-modal-media-${activeKind}`}>
+            <div
+              className={`v-modal-media v-modal-media-${activeKind}${fitMediaStyle ? " v-fit" : ""}`}
+              style={fitMediaStyle}
+            >
               {activeKind === "mp4" && (
                 <video
                   ref={videoElRef}
@@ -569,6 +630,12 @@ export default function Videos({ t, lang }: Props) {
                   controls
                   autoPlay
                   playsInline
+                  onLoadedMetadata={(e) => {
+                    const v = e.currentTarget;
+                    if (v.videoWidth > 0 && v.videoHeight > 0) {
+                      setVideoAR(v.videoWidth / v.videoHeight);
+                    }
+                  }}
                 />
               )}
               {activeKind === "youtube" && (

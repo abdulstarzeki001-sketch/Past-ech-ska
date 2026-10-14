@@ -31,6 +31,7 @@ html, body, #root {
   height: 100%;
   width: 100%;
   overflow: hidden;
+  overscroll-behavior: none;
   font-family: -apple-system, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
   background: var(--tg-bg);
   -webkit-font-smoothing: antialiased;
@@ -528,12 +529,17 @@ html, body, #root {
 
 /* ══════════════════════════════════════════
    Chat screen (messages + call header)
+   Uses visualViewport CSS vars (--tg-vh, --tg-top) set by JS so the
+   composer always hugs the keyboard on iOS with no black gap.
    ══════════════════════════════════════════ */
 .tg-chat-page {
-  position: relative;
+  position: fixed;
+  top: var(--tg-top, 0px);
+  left: 0;
+  width: 100%;
+  height: var(--tg-vh, 100svh);
   display: flex;
   flex-direction: column;
-  height: 100%;
   overflow: hidden;
   background: #d2dbe5;
 }
@@ -706,7 +712,17 @@ html, body, #root {
 .tg-bubble--in .tg-bubble-meta { color: var(--tg-subtext); opacity: 1; }
 .tg-bubble--out .tg-bubble-meta { color: rgba(255,255,255,0.85); }
 
-.tg-read-icon { color: #cde7ff; margin-left: 1px; }
+.tg-read-icon { color: rgba(255, 255, 255, 0.85); margin-left: 1px; }
+.tg-read-icon--seen {
+  color: #1c4b8f;
+  filter: drop-shadow(0 0 1.5px rgba(255, 255, 255, 0.55));
+}
+@media (prefers-color-scheme: dark) {
+  .tg-read-icon--seen {
+    color: #9fe0ff;
+    filter: none;
+  }
+}
 
 /* Typing indicator */
 .tg-bubble--typing {
@@ -745,13 +761,15 @@ html, body, #root {
   border-top: 0.5px solid var(--tg-sep);
   flex-shrink: 0;
 }
+/* Keyboard open → no safe-area padding, the bar hugs the keyboard exactly. */
+.tg-kb-open .tg-composer { padding-bottom: 8px; }
 
 .tg-composer-attach,
 .tg-composer-send,
 .tg-composer-mic {
   flex-shrink: 0;
-  width: 40px;
-  height: 40px;
+  width: 46px;
+  height: 46px;
   border: none;
   background: none;
   cursor: pointer;
@@ -775,20 +793,365 @@ html, body, #root {
 }
 .tg-composer-send:active { transform: scale(0.88); background: var(--tg-blue-deep); }
 
-.tg-composer-input {
+.tg-composer-field {
+  position: relative;
   flex: 1;
-  min-height: 40px;
-  max-height: 120px;
-  resize: none;
+  min-width: 0;
+  display: flex;
+}
+
+.tg-composer-input {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  min-height: 46px;
+  max-height: 134px; /* ~5 lines @ 22px + padding */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  word-break: break-word;
+  white-space: pre-wrap;
+  unicode-bidi: plaintext;
   border: none;
   outline: none;
   background: var(--tg-card);
   color: var(--tg-text);
-  border-radius: 20px;
-  padding: 9px 14px;
-  font-size: 16px;
-  line-height: 1.3;
+  caret-color: var(--tg-blue);
+  border-radius: 23px;
+  padding: 12px 40px 12px 14px;
+  font-size: 17px; /* ≥16px prevents iOS auto-zoom on focus */
+  line-height: 22px;
   font-family: inherit;
   box-shadow: 0 0 0 0.5px var(--tg-sep);
+  cursor: text;
 }
-.tg-composer-input::placeholder { color: var(--tg-subtext); }
+
+/* Sticker/emoji hint icon pinned inside the right edge of the field */
+.tg-composer-emoji {
+  position: absolute;
+  right: 11px;
+  bottom: 12px;
+  color: var(--tg-subtext);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+}
+/* Placeholder via CSS attr — works for contenteditable */
+.tg-composer-input:empty::before {
+  content: attr(data-placeholder);
+  color: var(--tg-subtext);
+  pointer-events: none;
+}
+/* Dimmed during upload */
+.tg-composer-input--sending { opacity: 0.55; pointer-events: none; }
+
+.tg-chat-peer-status--online { color: var(--tg-blue); }
+
+.tg-chat-state {
+  align-self: center;
+  margin-top: 40px;
+  font-size: 14.5px;
+  color: #fff;
+  background: rgba(80,100,130,0.45);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  padding: 8px 16px;
+  border-radius: 14px;
+}
+
+.tg-bubble-wrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  max-width: 78%;
+}
+.tg-bubble-row--out .tg-bubble-wrap { align-items: flex-end; }
+.tg-bubble-row--in .tg-bubble-wrap { align-items: flex-start; }
+.tg-bubble-wrap .tg-bubble { max-width: 100%; }
+
+.tg-bubble--image {
+  padding: 3px;
+  border-radius: 14px;
+}
+.tg-bubble--image .tg-bubble-meta {
+  position: absolute;
+  right: 9px;
+  bottom: 8px;
+  margin: 0;
+  background: rgba(0,0,0,0.45);
+  color: #fff !important;
+  padding: 2px 7px;
+  border-radius: 10px;
+  opacity: 1;
+}
+.tg-bubble-img {
+  display: block;
+  width: 100%;
+  min-width: 180px;
+  max-width: 320px;
+  max-height: 360px;
+  object-fit: cover;
+  border-radius: 12px;
+  cursor: pointer;
+}
+.tg-bubble-img--loading {
+  min-height: 160px;
+  background: rgba(120,140,165,0.25);
+  animation: tg-img-pulse 1.2s ease-in-out infinite;
+}
+@keyframes tg-img-pulse {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+
+.tg-bubble--deleted { opacity: 0.75; }
+.tg-bubble-deleted {
+  font-style: italic;
+  opacity: 0.8;
+  font-size: 14.5px;
+}
+
+/* Voice message */
+.tg-voice {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 200px;
+  padding: 2px 0;
+}
+.tg-voice-btn {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: var(--tg-blue);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.tg-voice--out .tg-voice-btn {
+  background: rgba(255,255,255,0.95);
+  color: #2A8FE0;
+}
+.tg-voice-wave {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 22px;
+  flex: 1;
+  cursor: pointer;
+}
+.tg-voice-bar {
+  width: 2.5px;
+  border-radius: 2px;
+  background: rgba(42,143,224,0.35);
+  min-height: 3px;
+}
+.tg-voice-bar.is-played { background: var(--tg-blue); }
+.tg-voice--out .tg-voice-bar { background: rgba(255,255,255,0.45); }
+.tg-voice--out .tg-voice-bar.is-played { background: #fff; }
+.tg-voice-time {
+  font-size: 12px;
+  opacity: 0.75;
+  min-width: 32px;
+}
+
+/* Message action menu (reactions + delete) */
+.tg-msg-menu {
+  position: absolute;
+  top: -44px;
+  left: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: var(--tg-card);
+  border-radius: 22px;
+  padding: 4px 8px;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.22);
+  animation: tg-menu-in 0.16s cubic-bezier(0.22,0.7,0.3,1);
+}
+.tg-msg-menu--out { left: auto; right: 0; }
+@keyframes tg-menu-in {
+  from { opacity: 0; transform: translateY(6px) scale(0.9); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.tg-msg-menu-emoji {
+  border: none;
+  background: none;
+  font-size: 21px;
+  padding: 4px 5px;
+  cursor: pointer;
+  border-radius: 50%;
+  line-height: 1;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.12s;
+}
+.tg-msg-menu-emoji:active { transform: scale(1.25); }
+.tg-msg-menu-emoji.is-active { background: rgba(42,171,238,0.18); }
+.tg-msg-menu-delete {
+  border: none;
+  background: none;
+  color: #e53935;
+  padding: 5px 6px 3px;
+  margin-left: 2px;
+  cursor: pointer;
+  border-radius: 50%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Reaction chips */
+.tg-reactions {
+  display: flex;
+  gap: 4px;
+  margin: 3px 4px 2px;
+}
+.tg-reaction-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: none;
+  background: var(--tg-card);
+  border-radius: 12px;
+  padding: 2px 8px;
+  font-size: 14px;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.12);
+  -webkit-tap-highlight-color: transparent;
+}
+.tg-reaction-chip.is-mine {
+  background: var(--tg-blue);
+  color: #fff;
+}
+.tg-reaction-count { font-size: 12px; font-weight: 600; }
+
+/* Recording composer */
+.tg-composer--recording {
+  align-items: center;
+  gap: 10px;
+  padding-left: 14px;
+}
+.tg-rec-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #e53935;
+  animation: tg-rec-blink 1s infinite;
+}
+@keyframes tg-rec-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
+}
+.tg-rec-time {
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+  color: var(--tg-text);
+  flex: 0 0 auto;
+}
+.tg-rec-cancel {
+  flex: 1;
+  border: none;
+  background: none;
+  color: var(--tg-subtext);
+  font-size: 16px;
+  cursor: pointer;
+  text-align: center;
+  -webkit-tap-highlight-color: transparent;
+}
+.tg-composer-mic.is-error { color: #e53935; }
+
+/* Image lightbox */
+.tg-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(0,0,0,0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: tg-menu-in 0.15s ease;
+}
+.tg-lightbox img {
+  max-width: 100vw;
+  max-height: 100vh;
+  object-fit: contain;
+}
+
+/* Login screen */
+.tg-login {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 28px;
+  background: var(--tg-bg, #fff);
+}
+@media (prefers-color-scheme: dark) {
+  .tg-login { background: #0e1621; }
+}
+.tg-login-logo {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #37AEE2, #1E96C8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+  box-shadow: 0 8px 26px rgba(42,143,224,0.35);
+}
+.tg-login-logo svg { transform: translateX(-3px); }
+.tg-login-title {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--tg-text);
+  margin: 0;
+}
+.tg-login-sub {
+  font-size: 15px;
+  color: var(--tg-subtext);
+  margin: 0 0 14px;
+  text-align: center;
+}
+.tg-login-form {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  max-width: 320px;
+}
+.tg-login-input {
+  flex: 1;
+  border: 1.5px solid var(--tg-sep);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 17px;
+  outline: none;
+  background: var(--tg-card);
+  color: var(--tg-text);
+  text-align: center;
+  letter-spacing: 2px;
+}
+.tg-login-input:focus { border-color: var(--tg-blue); }
+.tg-login-input.is-error { border-color: #e53935; }
+.tg-login-btn {
+  border: none;
+  border-radius: 12px;
+  padding: 0 22px;
+  background: var(--tg-blue);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.tg-login-btn:disabled { opacity: 0.5; }
+.tg-login-error {
+  color: #e53935;
+  font-size: 14px;
+  margin: 6px 0 0;
+}

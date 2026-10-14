@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { type Translations, type Lang } from "@/i18n/translations";
 import Footer from "@/components/Footer";
 import PhotoBackdrop from "@/components/PhotoBackdrop";
@@ -6,16 +6,104 @@ import { usePrivateContent, pickLangPages } from "@/hooks/usePrivateContent";
 import RevealCard from "@/components/RevealCard";
 import { PAGE_AUDIO_PAUSE_EVENT, PAGE_AUDIO_RESUME_EVENT } from "@/hooks/usePageAudio";
 import { mediaUrl } from "@/lib/r2";
+import "@/styles/luxe-songs-writings.css";
 
 interface Props {
   t: Translations;
   lang: Lang;
 }
 
+function isYouTube(src: string): boolean {
+  return /youtube\.com|youtu\.be/i.test(src);
+}
+
+function youTubeId(src: string): string | null {
+  const patterns = [
+    /youtu\.be\/([A-Za-z0-9_-]{6,})/,
+    /[?&]v=([A-Za-z0-9_-]{6,})/,
+    /embed\/([A-Za-z0-9_-]{6,})/,
+    /shorts\/([A-Za-z0-9_-]{6,})/,
+  ];
+  for (const re of patterns) {
+    const m = src.match(re);
+    if (m) return m[1];
+  }
+  return null;
+}
+
+function youTubePlaylistId(src: string): string | null {
+  const m = src.match(/[?&]list=([A-Za-z0-9_-]+)/);
+  return m ? m[1] : null;
+}
+
+/* Click-to-load YouTube player: shows the video thumbnail with a play button
+   and only mounts the heavy iframe after a tap. Exactly one iframe is mounted
+   at a time (activeId), which keeps memory low on iPhone. */
+function YouTubeSongPlayer({
+  embedSrc,
+  thumbSrc,
+  title,
+  playing,
+  onPlay,
+}: {
+  embedSrc: string;
+  thumbSrc: string | null;
+  title: string;
+  playing: boolean;
+  onPlay: () => void;
+}) {
+  if (playing) {
+    return (
+      <div className="yt-song-embed">
+        <iframe
+          src={embedSrc}
+          title={title}
+          allow="autoplay; encrypted-media; picture-in-picture"
+          allowFullScreen
+        />
+      </div>
+    );
+  }
+  return (
+    <button
+      type="button"
+      className="yt-song-facade"
+      onClick={onPlay}
+      aria-label={title}
+    >
+      {thumbSrc ? (
+        <img src={thumbSrc} alt="" loading="lazy" draggable={false} />
+      ) : (
+        <span className="yt-song-thumb-fallback" aria-hidden="true" />
+      )}
+      <span className="yt-song-play" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor">
+          <path d="M8 5.5v13l11-6.5z" />
+        </svg>
+      </span>
+    </button>
+  );
+}
+
 export default function Songs({ t, lang }: Props) {
   const data = usePrivateContent();
   const p = pickLangPages(data, lang);
   const listRef = useRef<HTMLDivElement | null>(null);
+  const [activeYt, setActiveYt] = useState<number | null>(null);
+
+  // Starting a YouTube song: silence page audio and any playing <audio> cards.
+  function playYt(index: number) {
+    const root = listRef.current;
+    if (root) {
+      root
+        .querySelectorAll<HTMLAudioElement>("audio.audio-player")
+        .forEach((a) => {
+          if (!a.paused) a.pause();
+        });
+    }
+    window.dispatchEvent(new Event(PAGE_AUDIO_PAUSE_EVENT));
+    setActiveYt(index);
+  }
 
   useEffect(() => {
     const root = listRef.current;
@@ -47,6 +135,8 @@ export default function Songs({ t, lang }: Props) {
           a.pause();
         }
       });
+      // Starting an mp3 song must also unmount any active YouTube player.
+      setActiveYt(null);
       activeAudio = target;
       updateGlobalState();
     };
@@ -79,28 +169,60 @@ export default function Songs({ t, lang }: Props) {
   const songs = data?.songs ?? [];
 
   return (
-    <div className="page-content">
+    <div className="page-content luxe-songs">
       <PhotoBackdrop />
-      <div className="page-header">
+      <div className="luxe-specks" aria-hidden="true">
+        <div className="luxe-speck"></div>
+        <div className="luxe-speck"></div>
+        <div className="luxe-speck"></div>
+        <div className="luxe-speck"></div>
+        <div className="luxe-speck"></div>
+      </div>
+      <div className="page-header luxe-page-header">
         <h1>{t.songs_title}</h1>
         <p>{t.songs_text}</p>
       </div>
 
       <div className="songs-list" ref={listRef}>
-        {songs.map((s, i) => (
-          <RevealCard key={i} className="song-card glass" index={i}>
-            <h3>{s.title}</h3>
-            {songTextKeys[i] && <p>{songTextKeys[i]}</p>}
-            <audio
-              controls
-              preload="none"
-              src={mediaUrl(s.src)}
-              className="audio-player"
-            >
-              {t.audio_unsupported}
-            </audio>
-          </RevealCard>
-        ))}
+        {songs.map((s, i) => {
+          const ytId = isYouTube(s.src) ? youTubeId(s.src) : null;
+          const ytList = !ytId && isYouTube(s.src) ? youTubePlaylistId(s.src) : null;
+          const embedSrc = ytId
+            ? `https://www.youtube.com/embed/${ytId}?autoplay=1&rel=0&modestbranding=1&playsinline=1`
+            : ytList
+              ? `https://www.youtube.com/embed/videoseries?list=${ytList}&autoplay=1&rel=0&modestbranding=1&playsinline=1`
+              : null;
+          const thumbSrc = ytId
+            ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`
+            : (s.thumb ?? null);
+          return (
+            <RevealCard key={i} className="song-card glass luxe-song-card" index={i}>
+              <div className="luxe-vinyl-accent" aria-hidden="true"></div>
+              <div className="luxe-song-content">
+                <h3>{s.title}</h3>
+                {songTextKeys[i] && <p>{songTextKeys[i]}</p>}
+                {embedSrc ? (
+                  <YouTubeSongPlayer
+                    embedSrc={embedSrc}
+                    thumbSrc={thumbSrc}
+                    title={s.title}
+                    playing={activeYt === i}
+                    onPlay={() => playYt(i)}
+                  />
+                ) : (
+                  <audio
+                    controls
+                    preload="none"
+                    src={mediaUrl(s.src)}
+                    className="audio-player"
+                  >
+                    {t.audio_unsupported}
+                  </audio>
+                )}
+              </div>
+            </RevealCard>
+          );
+        })}
       </div>
 
       {p.songs_footer && <Footer text={p.songs_footer} />}
