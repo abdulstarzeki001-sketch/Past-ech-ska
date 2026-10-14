@@ -1,0 +1,58 @@
+name: Validate Cloudflare Pages (main)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cloudflare-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.9
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Cloudflare Pages release
+        run: pnpm run build:cloudflare
+
+      - name: Validate output and SPA routes
+        run: |
+          test -f artifacts/nafsam/dist/public/index.html
+          test -f artifacts/nafsam/dist/public/_redirects
+          test -f artifacts/nafsam/dist/public/telegram-call/index.html
+          test ! -f artifacts/nafsam/dist/public/404.html
+          grep -q '/telegram-call/index.html' artifacts/nafsam/dist/public/_redirects
+          echo "Cloudflare Pages release contains both application entry points."
+
+      - name: Upload previewable static build artifact
+        if: always() && success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cloudflare-pages-main
+          path: artifacts/nafsam/dist/public/
+          if-no-files-found: error
+          retention-days: 7
