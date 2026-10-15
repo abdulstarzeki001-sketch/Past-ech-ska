@@ -1,0 +1,42 @@
+name: NAFSAM · Frontend build check
+on:
+  push:
+    branches:
+      - agent/restore-old-login
+    paths:
+      - "artifacts/nafsam/**"
+      - "lib/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - ".github/workflows/nafsam-frontend.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  frontend:
+    name: TypeScript and production bundle
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.9
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: pnpm
+      - name: Install locked workspace dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Type-check NAFSAM
+        run: pnpm --filter @workspace/nafsam typecheck
+      - name: Build production NAFSAM
+        run: pnpm --filter @workspace/nafsam build
+        env:
+          CF_PAGES: "1"
