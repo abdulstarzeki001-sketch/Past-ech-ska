@@ -7,6 +7,7 @@ import Footer from "@/components/Footer";
 import PhotoBackdrop from "@/components/PhotoBackdrop";
 import usePageAudio from "@/hooks/usePageAudio";
 import { usePrivateContent, pickLangPages } from "@/hooks/usePrivateContent";
+import { imageUrl } from "@/lib/r2";
 
 import "@/styles/luxe-home-login.css";
 
@@ -88,7 +89,12 @@ export default function Home({ t, lang }: Props) {
     return () => clearInterval(interval);
   }, []);
 
-  const heroImage = ""; // Home image intentionally removed
+  const heroImage = (() => {
+    const photo = data?.photos?.find((file) => file && !/memori[-_]?0*1(?:\.[a-z0-9]+)?$/i.test(file.split("/").pop() ?? ""));
+    if (!photo) return "";
+    const dir = data?.mediaConfig?.photosDir || "all_photos";
+    return imageUrl(`${dir}/${photo}`);
+  })();
 
   useEffect(() => {
     if (!heroImage) return;
