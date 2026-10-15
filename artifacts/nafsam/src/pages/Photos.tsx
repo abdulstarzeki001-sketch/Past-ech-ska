@@ -528,7 +528,7 @@ export default function Photos({ t, lang }: Props) {
 
   const rawSpecialPhotos = data?.specialPhotos ?? [];
   const nonFeaturedPhotos = rawSpecialPhotos.filter((ph) => !ph.featured);
-  const featuredPhoto = rawSpecialPhotos.find((ph) => ph.featured && !brokenSrcs.has(privateImage(ph.file)));
+  const featuredPhoto = undefined; // Featured/starred image removed from gallery and lightbox.
 
   const specialPhotos = nonFeaturedPhotos.map((ph, i) => ({
     src: privateImage(ph.file),
