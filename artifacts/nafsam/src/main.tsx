@@ -5,6 +5,7 @@ import LoadingVeil from "./components/LoadingVeil";
 import "./index.css";
 import "./mobile-performance.css";
 import "./luxury-memory.css";
+import "./separation-cinema.css";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
