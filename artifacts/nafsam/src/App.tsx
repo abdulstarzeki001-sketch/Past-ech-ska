@@ -9,6 +9,7 @@ import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useMagneticButtons } from "@/hooks/useMagneticButtons";
 import { useIdleVignette } from "@/hooks/useIdleVignette";
 import useScrollRestoration from "@/hooks/useScrollRestoration";
+import usePreventPullToRefresh from "@/hooks/usePreventPullToRefresh";
 import Navbar from "@/components/Navbar";
 import CinematicPageTransition from "@/components/CinematicPageTransition";
 import CinematicAtmosphere from "@/components/CinematicAtmosphere";
@@ -56,6 +57,7 @@ function AppContent() {
   useMagneticButtons();
   useIdleVignette();
   useScrollRestoration(location);
+  usePreventPullToRefresh();
 
   const evictAuthRef = useRef<() => void>(() => {});
 
