@@ -528,7 +528,6 @@ export default function Photos({ t, lang }: Props) {
 
   const rawSpecialPhotos = data?.specialPhotos ?? [];
   const nonFeaturedPhotos = rawSpecialPhotos.filter((ph) => !ph.featured);
-  const featuredPhoto = undefined; // Featured/starred image removed from gallery and lightbox.
 
   const specialPhotos = nonFeaturedPhotos.map((ph, i) => ({
     src: privateImage(ph.file),
@@ -546,22 +545,12 @@ export default function Photos({ t, lang }: Props) {
     };
   }).filter((ph) => !brokenSrcs.has(ph.src) && ![ph.title, ph.text].some((value) => typeof value === "string" && /سامحتك[ِ]?\s*كثير/.test(value)));
 
-  // Flat, stable-order list backing the lightbox: specials, then featured,
-  // then the album. Card indices below MUST follow this exact layout.
-  const featuredLightbox = featuredPhoto
-    ? [
-        {
-          src: privateImage(featuredPhoto.file),
-          thumb: privateImageThumb(featuredPhoto.file),
-        },
-      ]
-    : [];
+  // Flat list backing the lightbox: special photos, followed by album photos.
   const lightboxItems = [
     ...specialPhotos.map((ph) => ({ src: ph.src, thumb: ph.thumb })),
-    ...featuredLightbox,
     ...albumPhotos.map((ph) => ({ src: ph.src, thumb: ph.thumb })),
   ];
-  const albumIndexBase = specialPhotos.length + featuredLightbox.length;
+  const albumIndexBase = specialPhotos.length;
   const lightboxCount = lightboxItems.length;
   const lightboxItemsRef = useRef(lightboxItems);
   lightboxItemsRef.current = lightboxItems;
@@ -720,54 +709,7 @@ export default function Photos({ t, lang }: Props) {
           />
         ))}
 
-        {featuredPhoto &&
-          (() => {
-            const featuredSrc = privateImage(featuredPhoto.file);
-            const featuredThumb = privateImageThumb(featuredPhoto.file);
-            return (
-              <RevealArticle
-                className="photo-card glass photo-card-featured luxe-photo-card"
-                index={nonFeaturedPhotos.length}
-              >
-                <div className="luxe-corner luxe-tl" aria-hidden="true" />
-                <div className="luxe-corner luxe-tr" aria-hidden="true" />
-                <div className="luxe-corner luxe-bl" aria-hidden="true" />
-                <div className="luxe-corner luxe-br" aria-hidden="true" />
-                <div
-                  className="photo-card-media"
-                  onClick={() => setLightboxIndex(specialPhotos.length)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      setLightboxIndex(specialPhotos.length);
-                    }
-                  }}
-                >
-                  <LuxImage
-                    src={featuredThumb}
-                    fallbackSrc={featuredSrc}
-                    onError={() => markBroken(featuredSrc)}
-                    alt={p.photo7_text ?? ""}
-                    className="photo-img"
-                    nextSrc={albumPhotos.slice(0, 2).map((x) => x.thumb)}
-                  />
-                  <span className="photo-card-badge photo-card-badge-featured">
-                    ★
-                  </span>
-                </div>
-                <div className="photo-caption-featured">
-                  {p.photo7_text && (
-                    <p className="featured-quote">{p.photo7_text}</p>
-                  )}
-                  {p.photo7_sub && (
-                    <p className="featured-sub">{p.photo7_sub}</p>
-                  )}
-                </div>
-              </RevealArticle>
-            );
-          })()}
+
       </div>
 
       <div className="album-divider">
