@@ -5942,3 +5942,36 @@ body.ambient-mute .dust-layer{
   .locale-picker__menu { animation: none; }
   .locale-picker__trigger, .locale-picker__option, .locale-picker__chevron { transition: none; }
 }
+
+
+/* Always-visible language control, independent of scroll position and page transitions. */
+.locale-fixed-auth,
+.locale-fixed-login {
+  position: fixed;
+  z-index: 1450;
+  top: max(15px, calc(env(safe-area-inset-top, 0px) + 10px));
+  inset-inline-end: 14px;
+  pointer-events: none;
+}
+.locale-fixed-auth {
+  /* Keep chat/logout buttons unobstructed in the header. */
+  inset-inline-end: 117px;
+}
+.locale-fixed-auth .locale-picker,
+.locale-fixed-login .locale-picker {
+  position: relative;
+  inset: auto;
+  pointer-events: auto;
+}
+.locale-fixed-auth .locale-picker__menu,
+.locale-fixed-login .locale-picker__menu { z-index: 1451; }
+@media (max-width: 960px) {
+  .locale-fixed-auth {
+    top: max(10px, calc(env(safe-area-inset-top, 0px) + 8px));
+    inset-inline-end: 112px;
+  }
+}
+@media (max-width: 620px) {
+  .locale-fixed-auth { inset-inline-end: 108px; }
+  .locale-fixed-login { inset-inline-end: 12px; }
+}
