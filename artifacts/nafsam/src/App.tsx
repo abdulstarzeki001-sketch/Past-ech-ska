@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, lazy, Suspense } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   Switch,
   Route,
@@ -9,7 +10,6 @@ import {
 import { useLang } from "@/hooks/useLang";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import Rain from "@/components/Rain";
-import FloatingHearts from "@/components/FloatingHearts";
 import DustParticles from "@/components/DustParticles";
 import { useMagneticButtons } from "@/hooks/useMagneticButtons";
 import { useIdleVignette } from "@/hooks/useIdleVignette";
@@ -54,6 +54,7 @@ function ProtectedRoute({
 
 function AppContent() {
   const { lang, setLang, t } = useLang();
+  const reduceMotion = useReducedMotion();
   const [authState, setAuthState] = useState<AuthState>("checking");
   const [location] = useLocation();
   useMagneticButtons();
@@ -179,7 +180,16 @@ function AppContent() {
       {authState === "authed" && (
         <Navbar t={t} lang={lang} onLogout={handleLogout} />
       )}
-      <main>
+      <main className="cinematic-main">
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={location}
+            className="cinematic-page-transition"
+            initial={reduceMotion ? false : { opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={reduceMotion ? { opacity: 1 } : { opacity: 0, y: -12 }}
+            transition={{ duration: reduceMotion ? 0 : 0.36, ease: "easeInOut" }}
+          >
         <Switch>
           <Route path="/">
             <Login t={t} lang={lang} onAuth={() => setAuthState("authed")} />
@@ -223,6 +233,8 @@ function AppContent() {
             <Redirect to="/" />
           </Route>
         </Switch>
+          </motion.div>
+        </AnimatePresence>
       </main>
     </>
   );
@@ -230,7 +242,6 @@ function AppContent() {
   return (
     <div className="app-shell">
       <Rain />
-      <FloatingHearts />
       <DustParticles />
       <LanguageSwitcher lang={lang} setLang={setLang} />
       {body}
