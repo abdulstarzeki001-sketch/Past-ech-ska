@@ -526,15 +526,15 @@ export default function Photos({ t, lang }: Props) {
   const captions = data?.captions?.[lang] ?? data?.captions?.tr ?? [];
   const allPhotos = data?.photos ?? [];
 
-  const rawSpecialPhotos = (data?.specialPhotos ?? []).filter((ph) => !brokenSrcs.has(privateImage(ph.file)));
+  const rawSpecialPhotos = data?.specialPhotos ?? [];
   const nonFeaturedPhotos = rawSpecialPhotos.filter((ph) => !ph.featured);
-  const featuredPhoto = rawSpecialPhotos.find((ph) => ph.featured);
+  const featuredPhoto = rawSpecialPhotos.find((ph) => ph.featured && !brokenSrcs.has(privateImage(ph.file)));
 
   const specialPhotos = nonFeaturedPhotos.map((ph, i) => ({
     src: privateImage(ph.file),
     thumb: privateImageThumb(ph.file),
     text: p[SPECIAL_PHOTO_TEXT_KEYS[i]] ?? undefined,
-  }));
+  })).filter((ph) => !brokenSrcs.has(ph.src));
 
   const albumPhotos = allPhotos.map((name, i) => {
     const story = i < captions.length ? captions[i] : null;
