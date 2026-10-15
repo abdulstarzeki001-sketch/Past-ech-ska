@@ -39,6 +39,8 @@ export default function useScrollRestoration(location: string) {
 
     const key = KEY_PREFIX + location;
     const saved = readScroll(key);
+    // Never move an already-scrolled page to an older saved position.
+    // The initial restore is only for a newly mounted route at scrollY=0.
 
     let rafId = 0;
     let cancelled = false;
@@ -46,7 +48,7 @@ export default function useScrollRestoration(location: string) {
     const start = performance.now();
 
     const tryRestore = () => {
-      if (cancelled || userInteracted || saved <= 0) return;
+      if (cancelled || userInteracted || saved <= 0 || window.scrollY > 2) return;
       const maxScroll =
         document.documentElement.scrollHeight - window.innerHeight;
       if (maxScroll >= saved) {
@@ -62,12 +64,11 @@ export default function useScrollRestoration(location: string) {
 
     if (saved > 0) {
       rafId = requestAnimationFrame(tryRestore);
-    } else {
-      window.scrollTo(0, 0);
     }
 
     const cancelRestore = () => {
       userInteracted = true;
+      cancelAnimationFrame(rafId);
     };
     window.addEventListener("wheel", cancelRestore, { passive: true });
     window.addEventListener("touchstart", cancelRestore, { passive: true });
@@ -75,6 +76,7 @@ export default function useScrollRestoration(location: string) {
 
     let ticking = false;
     const onScroll = () => {
+      cancelRestore();
       if (ticking) return;
       ticking = true;
       requestAnimationFrame(() => {
