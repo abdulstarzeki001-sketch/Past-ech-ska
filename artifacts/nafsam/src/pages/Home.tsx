@@ -88,7 +88,7 @@ export default function Home({ t, lang }: Props) {
     return () => clearInterval(interval);
   }, []);
 
-  const heroImage = data?.mediaConfig?.heroImageUrl ?? "";
+  const heroImage = ""; // Home image intentionally removed
 
   useEffect(() => {
     if (!heroImage) return;
