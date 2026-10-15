@@ -285,3 +285,12 @@ a,button { -webkit-tap-highlight-color:transparent }
   .home-page .cards-grid .card,.journey-card,.luxe-photo-card,.luxe-writing-card,
   .separation-button{transition:none!important}
 }
+
+
+/* Missing or excluded media must not occupy an empty grid cell.
+   Keep the surrounding gallery and journey layout compact. */
+.photo-card:has(.lux-img-wrap.is-broken),
+.journey-chapter:has(.lux-img-wrap.is-broken) {
+  display: none !important;
+}
+.lux-img-wrap.is-broken { display: none !important; }
