@@ -544,7 +544,7 @@ export default function Photos({ t, lang }: Props) {
       title: story?.title ?? null,
       text: story?.text ?? t.photos_fallback_caption,
     };
-  }).filter((ph) => !brokenSrcs.has(ph.src));
+  }).filter((ph) => !brokenSrcs.has(ph.src) && ![ph.title, ph.text].some((value) => typeof value === "string" && /سامحتك[ِ]?\s*كثير/.test(value)));
 
   // Flat, stable-order list backing the lightbox: specials, then featured,
   // then the album. Card indices below MUST follow this exact layout.
