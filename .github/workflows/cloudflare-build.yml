@@ -36,6 +36,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Type-check NAFSAM
+        run: pnpm --filter @workspace/nafsam typecheck
+
       - name: Build Cloudflare Pages release
         run: pnpm run build:cloudflare
 
