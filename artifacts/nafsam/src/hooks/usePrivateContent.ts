@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { Lang } from "@/i18n/translations";
 import { STATIC_MODE, R2_BASE } from "@/lib/r2";
+import { cleanPrivateMedia } from "@/lib/mediaCleanup";
 
 export type Localized = string | Partial<Record<Lang, string>>;
 
@@ -186,10 +187,10 @@ async function loadPrivateContent(): Promise<PrivateContent | null> {
       .then((data) => {
         if (myGen !== generation) return null;
         if (data) {
-          cache = data;
+          cache = cleanPrivateMedia(data);
           subscribers.forEach((cb) => cb(cache));
         }
-        return data;
+        return data ? cleanPrivateMedia(data) : null;
       })
       .catch(() => null)
       .finally(() => {
@@ -212,10 +213,10 @@ async function loadPrivateContent(): Promise<PrivateContent | null> {
     .then((data) => {
       if (myGen !== generation) return null;
       if (data) {
-        cache = data;
+        cache = cleanPrivateMedia(data);
         subscribers.forEach((cb) => cb(cache));
       }
-      return data;
+      return data ? cleanPrivateMedia(data) : null;
     })
     .catch((err) => {
       console.error("[usePrivateContent] api load failed:", err);
@@ -259,7 +260,7 @@ export async function revalidatePrivateContent(): Promise<void> {
     }
     if (r.ok) {
       const data = (await r.json()) as PrivateContent;
-      cache = data;
+      cache = cleanPrivateMedia(data);
       subscribers.forEach((cb) => cb(cache));
     }
   } catch {
