@@ -2,15 +2,17 @@ import { Link, useLocation } from "wouter";
 import { motion, useReducedMotion } from "framer-motion";
 import { BookHeart, Camera, Film, HeartPulse, House, LogOut, Map, Music2, Send } from "lucide-react";
 import { type Translations, type Lang } from "@/i18n/translations";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 import "@/styles/luxe-chrome.css";
 
 interface Props {
   t: Translations;
   lang: Lang;
+  setLang: (lang: Lang) => void;
   onLogout: () => void;
 }
 
-export default function Navbar({ t, onLogout }: Props) {
+export default function Navbar({ t, lang, setLang, onLogout }: Props) {
   const [location] = useLocation();
   const reducedMotion = useReducedMotion();
   const spring = reducedMotion
@@ -57,6 +59,7 @@ export default function Navbar({ t, onLogout }: Props) {
           ))}
         </nav>
         <div className="cinema-header__actions">
+          <LanguageSwitcher lang={lang} setLang={setLang} />
           <a className="cinema-header__chat" href={telegramHref} aria-label={t.nav_telegram} title={t.nav_telegram}>
             <Send size={17} strokeWidth={1.65} /><span>{t.nav_telegram}</span>
           </a>
