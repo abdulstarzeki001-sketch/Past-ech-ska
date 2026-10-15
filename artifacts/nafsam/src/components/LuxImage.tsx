@@ -23,16 +23,19 @@ export default function LuxImage({
   nextSrc,
   fallbackSrc,
   onLoad,
+  onError,
   ...rest
 }: Props) {
   const imgRef = useRef<HTMLImageElement | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const [failed, setFailed] = useState(false);
   const [curSrc, setCurSrc] = useState(src);
   const isPriority = priority === "high";
 
   useEffect(() => {
     setCurSrc(src);
     setLoaded(false);
+    setFailed(!src || !src.trim());
   }, [src]);
 
   useEffect(() => {
@@ -60,7 +63,7 @@ export default function LuxImage({
 
   return (
     <span
-      className={`lux-img-wrap ${loaded ? "is-loaded" : "is-loading"} ${wrapClassName}`}
+      className={`lux-img-wrap ${failed ? "is-broken" : loaded ? "is-loaded" : "is-loading"} ${wrapClassName}`}
       aria-hidden={false}
     >
       <span className="lux-img-placeholder" aria-hidden="true" />
@@ -76,9 +79,15 @@ export default function LuxImage({
           setLoaded(true);
           onLoad?.(e);
         }}
-        onError={() => {
-          if (fallbackSrc && curSrc !== fallbackSrc) setCurSrc(fallbackSrc);
-          else setLoaded(true);
+        onError={(e) => {
+          // A missing thumbnail is not fatal until the original fails too.
+          if (fallbackSrc && curSrc !== fallbackSrc) {
+            setCurSrc(fallbackSrc);
+          } else {
+            setLoaded(false);
+            setFailed(true);
+            onError?.(e);
+          }
         }}
         {...rest}
       />
