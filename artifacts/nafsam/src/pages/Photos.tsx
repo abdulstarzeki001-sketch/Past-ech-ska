@@ -109,6 +109,7 @@ function SpecialCard({
   priority,
   nextSrc,
   onOpen,
+  onUnavailable,
 }: {
   src: string;
   thumb: string;
@@ -116,7 +117,7 @@ function SpecialCard({
   index: number;
   priority?: "high" | "auto";
   nextSrc?: string | string[];
-  onOpen: () => void;
+  onOpen: () => void; onUnavailable: () => void;
 }) {
   const { ref, near } = useNearViewport<HTMLDivElement>({
     rootMargin: GATE_MARGIN,
@@ -143,7 +144,7 @@ function SpecialCard({
         {near ? (
           <LuxImage
             src={thumb}
-            fallbackSrc={src}
+            fallbackSrc={src} onError={onUnavailable}
             alt={text ?? ""}
             className="photo-img"
             priority={priority}
@@ -171,6 +172,7 @@ function AlbumCard({
   index,
   nextSrc,
   onOpen,
+  onUnavailable,
 }: {
   src: string;
   thumb: string;
@@ -178,7 +180,7 @@ function AlbumCard({
   text?: string | null;
   index: number;
   nextSrc?: string | string[];
-  onOpen: () => void;
+  onOpen: () => void; onUnavailable: () => void;
 }) {
   const { ref, near } = useNearViewport<HTMLDivElement>({
     rootMargin: GATE_MARGIN,
@@ -205,7 +207,7 @@ function AlbumCard({
         {near ? (
           <LuxImage
             src={thumb}
-            fallbackSrc={src}
+            fallbackSrc={src} onError={onUnavailable}
             alt={title ?? ""}
             className="photo-img"
             nextSrc={nextSrc}
@@ -501,6 +503,10 @@ export default function Photos({ t, lang }: Props) {
   const lightboxCloseRef = useRef<HTMLButtonElement>(null);
   const lastFocusedRef = useRef<HTMLElement | null>(null);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const [brokenSrcs, setBrokenSrcs] = useState<Set<string>>(() => new Set());
+  const markBroken = useCallback((src: string) => {
+    setBrokenSrcs((prev) => prev.has(src) ? prev : new Set([...prev, src]));
+  }, []);
   const data = usePrivateContent();
   usePageAudio(data?.pageAudio?.photos ?? "");
   const p = pickLangPages(data, lang);
@@ -520,7 +526,7 @@ export default function Photos({ t, lang }: Props) {
   const captions = data?.captions?.[lang] ?? data?.captions?.tr ?? [];
   const allPhotos = data?.photos ?? [];
 
-  const rawSpecialPhotos = data?.specialPhotos ?? [];
+  const rawSpecialPhotos = (data?.specialPhotos ?? []).filter((ph) => !brokenSrcs.has(privateImage(ph.file)));
   const nonFeaturedPhotos = rawSpecialPhotos.filter((ph) => !ph.featured);
   const featuredPhoto = rawSpecialPhotos.find((ph) => ph.featured);
 
@@ -538,7 +544,7 @@ export default function Photos({ t, lang }: Props) {
       title: story?.title ?? null,
       text: story?.text ?? t.photos_fallback_caption,
     };
-  });
+  }).filter((ph) => !brokenSrcs.has(ph.src));
 
   // Flat, stable-order list backing the lightbox: specials, then featured,
   // then the album. Card indices below MUST follow this exact layout.
@@ -710,7 +716,7 @@ export default function Photos({ t, lang }: Props) {
             index={i}
             priority={i < 2 ? "high" : "auto"}
             nextSrc={specialPhotos[i + 1]?.thumb}
-            onOpen={() => setLightboxIndex(i)}
+            onOpen={() => setLightboxIndex(i)} onUnavailable={() => markBroken(ph.src)}
           />
         ))}
 
@@ -742,6 +748,7 @@ export default function Photos({ t, lang }: Props) {
                   <LuxImage
                     src={featuredThumb}
                     fallbackSrc={featuredSrc}
+                    onError={() => markBroken(featuredSrc)}
                     alt={p.photo7_text ?? ""}
                     className="photo-img"
                     nextSrc={albumPhotos.slice(0, 2).map((x) => x.thumb)}
@@ -783,7 +790,7 @@ export default function Photos({ t, lang }: Props) {
                 Boolean,
               ) as string[]
             }
-            onOpen={() => setLightboxIndex(albumIndexBase + i)}
+            onOpen={() => setLightboxIndex(albumIndexBase + i)} onUnavailable={() => markBroken(ph.src)}
           />
         ))}
       </div>
