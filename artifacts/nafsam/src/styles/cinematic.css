@@ -421,3 +421,12 @@ body:before{opacity:.26}
 @media (hover:none){
   .cinema-archive-card:hover,.cosmic-ui .photo-card:hover{transform:none!important}
 }
+
+
+/* Missing or excluded media must not occupy an empty grid cell.
+   Keep the surrounding gallery and journey layout compact. */
+.photo-card:has(.lux-img-wrap.is-broken),
+.journey-chapter:has(.lux-img-wrap.is-broken) {
+  display: none !important;
+}
+.lux-img-wrap.is-broken { display: none !important; }
