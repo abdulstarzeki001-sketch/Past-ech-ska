@@ -201,7 +201,7 @@ function AppContent() {
   const body = (
     <>
       {authState === "authed" && (
-        <Navbar t={t} lang={lang} onLogout={handleLogout} />
+        <Navbar t={t} lang={lang} setLang={setLang} onLogout={handleLogout} />
       )}
       <main id="main-content">
         <CinematicPageTransition
@@ -227,7 +227,9 @@ function AppContent() {
   return (
     <div className="app-shell cosmic-ui">
       <CinematicAtmosphere />
-      <LanguageSwitcher lang={lang} setLang={setLang} />
+      {authState !== "authed" && (
+        <LanguageSwitcher lang={lang} setLang={setLang} floating />
+      )}
       {body}
     </div>
   );
