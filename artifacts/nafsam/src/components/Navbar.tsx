@@ -61,20 +61,19 @@ export default function Navbar({ t, onLogout }: Props) {
             </Link>
           );
         })}
-        <a
-          href={telegramHref}
-          className="memory-dock__item"
-          title={t.nav_telegram}
-        >
+
+      </div>
+
+      <div className="memory-dock__actions">
+        <a href={telegramHref} className="memory-dock__telegram" title={t.nav_telegram} aria-label={t.nav_telegram}>
           <Send size={18} strokeWidth={1.8} aria-hidden="true" />
           <span>{t.nav_telegram}</span>
         </a>
+        <button className="memory-dock__logout" onClick={onLogout} title={t.nav_logout} aria-label={t.nav_logout}>
+          <LogOut size={18} strokeWidth={1.8} aria-hidden="true" />
+          <span>{t.nav_logout}</span>
+        </button>
       </div>
-
-      <button className="memory-dock__logout" onClick={onLogout} title={t.nav_logout}>
-        <LogOut size={18} strokeWidth={1.8} aria-hidden="true" />
-        <span>{t.nav_logout}</span>
-      </button>
     </nav>
   );
 }
