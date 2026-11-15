@@ -3,6 +3,8 @@ import Login from "@/pages/Login";
 import Home from "@/pages/Home";
 import { fetchSession, type SessionStatus } from "@/lib/auth";
 import { startSmoothScroll } from "@/lib/smoothScroll";
+import ClickSpark from "@/components/reactbits/ClickSpark";
+import Noise from "@/components/reactbits/Noise";
 
 type State =
   | { phase: "checking" }
@@ -25,16 +27,22 @@ export default function App() {
     };
   }, []);
 
-  if (state.phase === "checking") return null;
-
+  let view = null;
   if (state.phase === "anon") {
-    return <Login onAuth={() => setState({ phase: "authed", openAt: state.openAt })} />;
+    view = <Login onAuth={() => setState({ phase: "authed", openAt: state.openAt })} />;
+  } else if (state.phase === "authed") {
+    view = (
+      <Home
+        openAt={state.openAt}
+        onLogout={() => setState({ phase: "anon", openAt: state.openAt })}
+      />
+    );
   }
 
   return (
-    <Home
-      openAt={state.openAt}
-      onLogout={() => setState({ phase: "anon", openAt: state.openAt })}
-    />
+    <ClickSpark sparkColor="#d8a57c" sparkCount={10} sparkRadius={22} duration={500}>
+      <Noise opacity={0.05} fixed />
+      {view}
+    </ClickSpark>
   );
 }

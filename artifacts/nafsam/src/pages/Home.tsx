@@ -8,12 +8,18 @@ import {
   archiveEase,
 } from "@/lib/gsap";
 import { getLenis } from "@/lib/smoothScroll";
-import SplitWords from "@/components/SplitWords";
-import SpotlightCard from "@/components/SpotlightCard";
-import ScrambleTitle from "@/components/ScrambleTitle";
 import OrbitMotif from "@/components/OrbitMotif";
+import ScrambleTitle from "@/components/ScrambleTitle";
 import DraggableStrip from "@/components/DraggableStrip";
 import FlipLayout from "@/components/FlipLayout";
+import Aurora from "@/components/reactbits/Aurora";
+import BlurText from "@/components/reactbits/BlurText";
+import GradientText from "@/components/reactbits/GradientText";
+import ShinyText from "@/components/reactbits/ShinyText";
+import Magnet from "@/components/reactbits/Magnet";
+import StarBorder from "@/components/reactbits/StarBorder";
+import Counter from "@/components/reactbits/Counter";
+import BorderGlow from "@/components/reactbits/BorderGlow";
 import { logout } from "@/lib/auth";
 
 interface HomeProps {
@@ -44,8 +50,6 @@ const CHAPTERS = [
   { title: "الوعد", body: "ما انتهى شيء طالما بقي أحدهما يتذكّر." },
 ];
 
-const easeOutQuart = (t: number) => 1 - Math.pow(1 - t, 4);
-
 const MEMORIES = [
   { title: "ليلة الشتاء", body: "حديث طويل تحت مطر خفيف، والوقت لم يكن يهم." },
   { title: "رسالة صباحية", body: "أول كلمة في اليوم، وآخر كلمة قبل النوم." },
@@ -59,6 +63,8 @@ const MILESTONES = [
   { title: "العودة", body: "حين التقت الطرق من جديد." },
   { title: "الآن", body: "ما زالت الحكاية مفتوحة." },
 ];
+
+const easeOutQuart = (t: number) => 1 - Math.pow(1 - t, 4);
 
 export default function Home({ openAt, onLogout }: HomeProps) {
   const rootRef = useRef<HTMLDivElement>(null);
@@ -74,8 +80,7 @@ export default function Home({ openAt, onLogout }: HomeProps) {
     const ctx = gsap.context(() => {
       gsap
         .timeline({ defaults: { ease: archiveEase } })
-        .from(".hero .kicker", { opacity: 0, y: 20, duration: 0.8 })
-        .from(".orbit-svg", { opacity: 0, scale: 0.8, duration: 1.4 }, "-=0.4")
+        .from(".orbit-svg", { opacity: 0, scale: 0.8, duration: 1.4 }, 0.2)
         .from(".hero-cta", { opacity: 0, y: 16, duration: 0.8 }, "-=0.8");
 
       gsap.from(".chapter", {
@@ -181,34 +186,63 @@ export default function Home({ openAt, onLogout }: HomeProps) {
       </header>
 
       <section className="hero">
+        <Aurora
+          className="hero-aurora"
+          colorStops={["#d8a57c", "#3a2a5a", "#16203d"]}
+          amplitude={0.9}
+          blend={0.5}
+          speed={0.6}
+        />
         <div ref={glowRef} className="hero-glow" aria-hidden="true" />
-        <p className="kicker">أرشيف قلبين افترقا</p>
-        <h1 className="hero-title">
-          <SplitWords text="لم تنتهِ الحكاية" />
-        </h1>
-        <OrbitMotif />
-        {!countdown.done && (
-          <SpotlightCard className="countdown-card">
-            <div className="countdown">
-              <Unit value={countdown.days} label="يوم" />
-              <Unit value={countdown.hours} label="ساعة" />
-              <Unit value={countdown.minutes} label="دقيقة" />
-              <Unit value={countdown.seconds} label="ثانية" />
-            </div>
-          </SpotlightCard>
-        )}
-        <button className="ghost-button hero-cta" onClick={scrollToChapters}>
-          ابدأ الرحلة
-        </button>
+        <div className="hero-content">
+          <BlurText text="أرشيف قلبين افترقا" animateBy="words" direction="top" delay={120} className="kicker" />
+          <h1 className="hero-title">
+            <GradientText colors={["#d8a57c", "#f4efe8", "#d8a57c"]} animationSpeed={6}>
+              لم تنتهِ الحكاية
+            </GradientText>
+          </h1>
+          <OrbitMotif />
+          {!countdown.done && (
+            <StarBorder
+              as="div"
+              className="countdown-card"
+              color="#d8a57c"
+              trailColor="#f4efe8"
+              duration={6}
+              thickness={1}
+              sparkle
+            >
+              <div className="countdown">
+                <Unit value={countdown.days} label="يوم" />
+                <Unit value={countdown.hours} label="ساعة" />
+                <Unit value={countdown.minutes} label="دقيقة" />
+                <Unit value={countdown.seconds} label="ثانية" />
+              </div>
+            </StarBorder>
+          )}
+          <Magnet padding={40} magnetStrength={3}>
+            <button className="ghost-button hero-cta" onClick={scrollToChapters}>
+              <ShinyText text="ابدأ الرحلة" color="#d8a57c" shineColor="#fffaf0" speed={3} />
+            </button>
+          </Magnet>
+        </div>
       </section>
 
       <section id="chapters" className="chapters">
         {CHAPTERS.map((c) => (
           <article className="chapter" key={c.title}>
-            <SpotlightCard>
-              <ScrambleTitle text={c.title} className="chapter-title" />
-              <p>{c.body}</p>
-            </SpotlightCard>
+            <BorderGlow
+              className="chapter-glow"
+              borderRadius={22}
+              backgroundColor="#0b1020"
+              colors={["#d8a57c", "#8a6aa8", "#3c5a9a"]}
+              fillOpacity={0.6}
+            >
+              <div className="chapter-inner">
+                <ScrambleTitle text={c.title} className="chapter-title" />
+                <p>{c.body}</p>
+              </div>
+            </BorderGlow>
           </article>
         ))}
       </section>
@@ -233,7 +267,14 @@ export default function Home({ openAt, onLogout }: HomeProps) {
 function Unit({ value, label }: { value: number; label: string }) {
   return (
     <div className="unit">
-      <span className="unit-value">{String(value).padStart(2, "0")}</span>
+      <Counter
+        value={value}
+        minDigits={2}
+        fontSize={36}
+        fontWeight={600}
+        textColor="#f4efe8"
+        tabular
+      />
       <span className="unit-label">{label}</span>
     </div>
   );

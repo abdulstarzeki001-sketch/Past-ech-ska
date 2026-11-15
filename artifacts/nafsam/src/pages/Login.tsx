@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { login } from "@/lib/auth";
 import SplitWords from "@/components/SplitWords";
 import SpotlightCard from "@/components/SpotlightCard";
+import Magnet from "@/components/reactbits/Magnet";
 
 interface LoginProps {
   onAuth: () => void;
@@ -50,9 +51,11 @@ export default function Login({ onAuth }: LoginProps) {
             onChange={(e) => setAnswer(e.target.value)}
             aria-label="الجواب"
           />
-          <button className="login-button" type="submit" disabled={busy || !answer.trim()}>
-            {busy ? "..." : "دخول"}
-          </button>
+          <Magnet padding={30} magnetStrength={2}>
+            <button className="login-button" type="submit" disabled={busy || !answer.trim()}>
+              {busy ? "..." : "دخول"}
+            </button>
+          </Magnet>
         </form>
         {error && (
           <p className="login-error" role="alert">

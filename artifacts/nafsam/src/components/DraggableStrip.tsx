@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef } from "react";
 import { gsap, Draggable } from "@/lib/gsap";
 import { getLenis } from "@/lib/smoothScroll";
+import GlareHover from "@/components/reactbits/GlareHover";
 
 interface StripItem {
   title: string;
@@ -43,8 +44,20 @@ export default function DraggableStrip({ items }: { items: StripItem[] }) {
       <div ref={trackRef} className="strip-track">
         {items.map((item) => (
           <article className="strip-card" key={item.title}>
-            <h3>{item.title}</h3>
-            <p>{item.body}</p>
+            <GlareHover
+              width="100%"
+              height="100%"
+              borderRadius="20px"
+              background="rgba(255,255,255,0.04)"
+              borderColor="rgba(255,255,255,0.09)"
+              glareColor="#ffffff"
+              glareOpacity={0.25}
+            >
+              <div className="strip-card-inner">
+                <h3>{item.title}</h3>
+                <p>{item.body}</p>
+              </div>
+            </GlareHover>
           </article>
         ))}
       </div>
