@@ -1,233 +1,65 @@
-import { useState, useEffect } from "react";
-import { useLocation } from "wouter";
-import { type Translations, type Lang } from "@/i18n/translations";
-import usePageAudio from "@/hooks/usePageAudio";
-import PhotoBackdrop from "@/components/PhotoBackdrop";
-import { fetchSession, login, type SessionCard } from "@/lib/auth";
+import { useState, type FormEvent } from "react";
+import { login } from "@/lib/auth";
+import SplitWords from "@/components/SplitWords";
+import SpotlightCard from "@/components/SpotlightCard";
 
-import "@/styles/luxe-home-login.css";
-
-// The login UI intentionally does NOT ship any answer identifiers to the client.
-// All validation is server-side via the NAFSAM_PASSWORDS env var.
-
-interface TimeParts {
-  days: number;
-  hrs: number;
-  mins: number;
-  secs: number;
+interface LoginProps {
+  onAuth: () => void;
 }
 
-function getCountdown(target: number, now: Date): TimeParts | null {
-  const diff = target - now.getTime();
-  if (diff <= 0) return null;
-  const d = Math.floor(diff / 1000);
-  return {
-    days: Math.floor(d / 86400),
-    hrs: Math.floor((d % 86400) / 3600),
-    mins: Math.floor((d % 3600) / 60),
-    secs: d % 60,
-  };
-}
+const MESSAGES: Record<string, string> = {
+  wrong: "الجواب غير صحيح، حاول مرة أخرى.",
+  closed: "هذا المكان ما زال مغلقاً، ينتظر وقته.",
+  rate_limited: "محاولات كثيرة، انتظر قليلاً ثم أعد المحاولة.",
+  network: "تعذّر الاتصال، تحقق من الشبكة.",
+};
 
-function getElapsed(from: number, now: Date): TimeParts {
-  const diff = Math.max(0, now.getTime() - from);
-  const d = Math.floor(diff / 1000);
-  return {
-    days: Math.floor(d / 86400),
-    hrs: Math.floor((d % 86400) / 3600),
-    mins: Math.floor((d % 3600) / 60),
-    secs: d % 60,
-  };
-}
+export default function Login({ onAuth }: LoginProps) {
+  const [answer, setAnswer] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
-interface Props {
-  t: Translations;
-  lang: Lang;
-  onAuth?: () => void;
-}
-
-export default function Login({ t, lang, onAuth }: Props) {
-  usePageAudio("login_song.mp3");
-  const [openAt, setOpenAt] = useState<number | null>(null);
-  const [countdown, setCountdown] = useState<TimeParts | null>(null);
-  const [elapsed, setElapsed] = useState<TimeParts | null>(null);
-  const [cards, setCards] = useState<SessionCard[]>([]);
-  const [cardCount, setCardCount] = useState<number>(0);
-  const [selectedUser, setSelectedUser] = useState("");
-  const [msg, setMsg] = useState("");
-  const [msgType, setMsgType] = useState<"" | "error" | "success">("");
-  const [submitting, setSubmitting] = useState(false);
-  const [, setLocation] = useLocation();
-
-  useEffect(() => {
-    let cancelled = false;
-    fetchSession().then((s) => {
-      if (cancelled) return;
-      if (s.authed) {
-        setLocation("/home");
-        return;
-      }
-      setOpenAt(s.openAt);
-      const cd = getCountdown(s.openAt, new Date());
-      setCountdown(cd);
-      if (cd === null) {
-        setElapsed(getElapsed(s.openAt, new Date()));
-      }
-      if (s.cards) {
-        setCards(s.cards);
-        setCardCount(s.cards.length);
-      } else if (s.cardCount) {
-        setCardCount(s.cardCount);
-      }
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [setLocation]);
-
-  useEffect(() => {
-    if (openAt === null) return;
-    let justOpened = false;
-    const iv = setInterval(() => {
-      const now = new Date();
-      const next = getCountdown(openAt, now);
-      setCountdown(next);
-      if (next === null) {
-        setElapsed(getElapsed(openAt, now));
-        if (!justOpened) {
-          justOpened = true;
-          fetchSession().then((s) => {
-            if (s.cards) setCards(s.cards);
-          });
-        }
-      }
-    }, 1000);
-    return () => clearInterval(iv);
-  }, [openAt]);
-
-  const isOpen = countdown === null && openAt !== null;
-
-  async function handleSubmit(e: React.FormEvent) {
+  const submit = async (e: FormEvent) => {
     e.preventDefault();
-    if (submitting) return;
-    if (!isOpen) {
-      setMsg(t.login_msg_closed);
-      setMsgType("error");
-      return;
-    }
-    setSubmitting(true);
-    const result = await login(selectedUser);
-    setSubmitting(false);
+    if (!answer.trim() || busy) return;
+    setBusy(true);
+    setError(null);
+    const result = await login(answer);
+    setBusy(false);
     if (result.ok) {
-      setMsg(t.login_msg_success);
-      setMsgType("success");
-      onAuth?.();
-      setTimeout(() => setLocation("/home"), 800);
-      return;
-    }
-    if (result.reason === "closed") {
-      setMsg(t.login_msg_closed);
+      onAuth();
     } else {
-      setMsg(t.login_msg_wrong);
+      setError(MESSAGES[result.reason] ?? MESSAGES.wrong);
     }
-    setMsgType("error");
-  }
+  };
 
   return (
-    <div className="page-content login-page celestial-luxe-theme">
-      <div className="luxe-ambient-glow" aria-hidden="true" />
-      <div className="luxe-stars" aria-hidden="true">
-        <div className="star star-1"></div>
-        <div className="star star-2"></div>
-        <div className="star star-3"></div>
-        <div className="star star-4"></div>
-        <div className="star star-5"></div>
-      </div>
-      <PhotoBackdrop />
-      <div className="login-container glass luxe-glass-card luxe-login-container">
-        <div className="luxe-corner top-left" aria-hidden="true"></div>
-        <div className="luxe-corner top-right" aria-hidden="true"></div>
-        <div className="luxe-corner bottom-left" aria-hidden="true"></div>
-        <div className="luxe-corner bottom-right" aria-hidden="true"></div>
-        <h1 className="login-title luxe-title">{t.login_title}</h1>
-        <p className="login-text luxe-text">{t.login_text}</p>
-
-        {isOpen && elapsed && (
-          <div className="elapsed-block">
-            <p className="elapsed-label">{t.elapsed_label}</p>
-            <div className="elapsed-digits">
-              <span className="elapsed-unit">
-                <strong>{elapsed.days}</strong>
-                <small>{t.countdown_day}</small>
-              </span>
-              <span className="elapsed-sep">:</span>
-              <span className="elapsed-unit">
-                <strong>{String(elapsed.hrs).padStart(2, "0")}</strong>
-                <small>{t.countdown_hour}</small>
-              </span>
-              <span className="elapsed-sep">:</span>
-              <span className="elapsed-unit">
-                <strong>{String(elapsed.mins).padStart(2, "0")}</strong>
-                <small>{t.countdown_minute}</small>
-              </span>
-              <span className="elapsed-sep">:</span>
-              <span className="elapsed-unit">
-                <strong>{String(elapsed.secs).padStart(2, "0")}</strong>
-                <small>{t.countdown_second}</small>
-              </span>
-            </div>
-          </div>
-        )}
-
-        <div className="user-cards-grid">
-          {cards.length > 0
-            ? cards.map((card, i) => (
-                <div key={`card-${i}`} className="user-card glass luxe-glass-card">
-                  <div className="riddle-hint">
-                    <span className="riddle-icon">🔓</span>
-                    <p>{card.hints[lang] ?? card.hints.tr ?? card.hints.en}</p>
-                  </div>
-                </div>
-              ))
-            : countdown !== null && cardCount > 0
-              ? Array.from({ length: cardCount }, (_, i) => (
-                  <div key={i} className="user-card glass luxe-glass-card">
-                    <div className="countdown-mini">
-                      <span>
-                        {countdown.days}{t.countdown_day} {countdown.hrs}
-                        {t.countdown_hour} {countdown.mins}{t.countdown_minute}{" "}
-                        {countdown.secs}{t.countdown_second}
-                      </span>
-                    </div>
-                  </div>
-                ))
-              : null}
-        </div>
-
-        <form className="login-form" onSubmit={handleSubmit}>
-          <label className="sr-only" htmlFor="login-answer">{t.login_input}</label>
+    <section className="login-stage">
+      <SpotlightCard className="login-card">
+        <p className="kicker">أرشيف خاص</p>
+        <h1 className="login-title">
+          <SplitWords text="ادخل بكلمة السر" />
+        </h1>
+        <form onSubmit={submit} className="login-form">
           <input
-            id="login-answer"
-            type="text"
-            value={selectedUser}
-            onChange={(e) => setSelectedUser(e.target.value)}
-            placeholder={t.login_input}
-            className="login-select"
-            disabled={submitting || !isOpen}
+            className="login-input"
+            type="password"
             autoComplete="off"
-            spellCheck={false}
+            placeholder="الجواب"
+            value={answer}
+            onChange={(e) => setAnswer(e.target.value)}
+            aria-label="الجواب"
           />
-          <button type="submit" className="btn btn-primary login-btn" disabled={submitting || !selectedUser.trim()}>
-            {t.login_button}
+          <button className="login-button" type="submit" disabled={busy || !answer.trim()}>
+            {busy ? "..." : "دخول"}
           </button>
         </form>
-
-        {msg && (
-          <div className={`login-msg ${msgType}`} role="alert" aria-live="assertive">{msg}</div>
+        {error && (
+          <p className="login-error" role="alert">
+            {error}
+          </p>
         )}
-
-        <p className="login-hint">{t.login_hint}</p>
-      </div>
-    </div>
+      </SpotlightCard>
+    </section>
   );
 }
