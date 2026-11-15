@@ -1,13 +1,16 @@
 :root {
   --bg: #050814;
   --bg-2: #0b1020;
-  --gold: #d8a57c;
-  --gold-soft: rgba(216, 165, 124, 0.18);
-  --text: #f4efe8;
+  --gold: #b9d3e6;
+  --gold-soft: rgba(185, 211, 230, 0.18);
+  --text: #eef4fa;
   --muted: rgba(244, 239, 232, 0.62);
   --glass: rgba(255, 255, 255, 0.04);
   --border: rgba(255, 255, 255, 0.09);
   --font: "Tajawal", "Inter", system-ui, sans-serif;
+  --font-display: "Amiri", "Tajawal", serif;
+  --font-latin: "Cormorant Garamond", "Inter", serif;
+  --ice: #dfeaf3;
 }
 
 * { box-sizing: border-box; }
@@ -15,9 +18,9 @@
 html, body, #root { height: 100%; margin: 0; }
 
 body {
-  background: radial-gradient(1200px 800px at 15% -10%, #16203d 0%, transparent 60%),
-              radial-gradient(900px 700px at 110% 110%, #2a1a14 0%, transparent 55%),
-              var(--bg);
+  background: radial-gradient(1100px 700px at 20% -15%, #1d2c58 0%, transparent 60%),
+              radial-gradient(900px 700px at 110% 110%, #14284a 0%, transparent 55%),
+              linear-gradient(180deg, #060a18 0%, var(--bg) 100%);
   color: var(--text);
   font-family: var(--font);
   -webkit-font-smoothing: antialiased;
@@ -26,9 +29,11 @@ body {
 
 .kicker {
   color: var(--gold);
-  letter-spacing: 0.25em;
-  font-size: 0.8rem;
-  margin: 0 0 1rem;
+  letter-spacing: 0.32em;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  margin: 0 0 1.2rem;
+  font-family: var(--font-latin);
 }
 
 /* Split-word reveal */
@@ -58,7 +63,7 @@ body {
   pointer-events: none;
 }
 .spotlight-card:hover::before { opacity: 1; }
-.spotlight-card:hover { border-color: rgba(216, 165, 124, 0.35); }
+.spotlight-card:hover { border-color: rgba(185, 211, 230, 0.35); }
 
 /* Login */
 .login-stage {
@@ -68,7 +73,7 @@ body {
   padding: 1.5rem;
 }
 .login-card { width: min(440px, 100%); text-align: center; }
-.login-title { font-size: clamp(1.8rem, 5vw, 2.6rem); font-weight: 700; margin: 0 0 1.5rem; }
+.login-title { font-family: var(--font-display); font-size: clamp(2rem, 5vw, 2.8rem); font-weight: 700; margin: 0 0 1.5rem; }
 .login-form { display: flex; gap: 0.6rem; }
 .login-input {
   flex: 1;
@@ -83,6 +88,7 @@ body {
 }
 .login-input:focus { border-color: var(--gold); }
 .login-button, .ghost-button {
+  letter-spacing: 0.04em;
   padding: 0.9rem 1.3rem;
   border-radius: 14px;
   border: 1px solid var(--gold);
@@ -92,7 +98,7 @@ body {
   cursor: pointer;
   transition: background 0.3s ease, color 0.3s ease;
 }
-.login-button:hover:not(:disabled), .ghost-button:hover { background: var(--gold); color: #1a1208; }
+.login-button:hover:not(:disabled), .ghost-button:hover { background: var(--gold); color: #071024; }
 .login-button:disabled { opacity: 0.45; cursor: default; }
 .login-error { color: #e8a0a0; margin: 1rem 0 0; font-size: 0.95rem; }
 
@@ -124,11 +130,21 @@ body {
   position: absolute;
   width: 60vmax; height: 60vmax;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(216, 165, 124, 0.18), transparent 65%);
+  background: radial-gradient(circle, rgba(185, 211, 230, 0.18), transparent 65%);
   top: 10%; left: 50%;
   pointer-events: none;
 }
-.hero-title { font-size: clamp(2.6rem, 9vw, 6rem); font-weight: 700; line-height: 1.05; margin: 0 0 2.5rem; }
+.hero-title {
+  font-family: var(--font-display);
+  font-size: clamp(2.8rem, 9vw, 6.4rem);
+  font-weight: 700;
+  line-height: 1.15;
+  margin: 0 0 1.5rem;
+  background: linear-gradient(180deg, #ffffff 0%, var(--ice) 45%, #8fa9bf 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
 
 .countdown-card { padding: 1.4rem 2rem; }
 .countdown { display: flex; gap: 1.6rem; justify-content: center; direction: ltr; }
@@ -175,7 +191,7 @@ body {
 
 /* Draggable strip (DraggableStrip) */
 .block { padding: 3rem 1.5rem; max-width: 1000px; margin: 0 auto; }
-.section-label { color: var(--gold); letter-spacing: 0.2em; font-weight: 600; margin: 0 0 1.5rem; }
+.section-label { font-family: var(--font-latin); color: var(--gold); letter-spacing: 0.28em; text-transform: uppercase; font-weight: 500; margin: 0 0 1.5rem; }
 .strip-viewport { overflow: hidden; }
 .strip-track { display: flex; gap: 1.2rem; width: max-content; padding: 0.5rem 0; }
 .strip-card { width: min(340px, 78vw); user-select: none; }
@@ -198,7 +214,7 @@ body {
 .flip-item p { margin: 0; color: var(--muted); line-height: 1.7; }
 
 /* Scramble titles and footer */
-.chapter-title { margin: 0 0 0.6rem; color: var(--gold); font-weight: 600; font-variant-numeric: tabular-nums; }
+.chapter-title { font-family: var(--font-display); font-size: 1.6rem; margin: 0 0 0.6rem; color: var(--gold); font-weight: 600; font-variant-numeric: tabular-nums; }
 .site-footer { padding: 4rem 1.5rem 6rem; text-align: center; }
 .footer-typed { color: var(--muted); font-size: 1.2rem; min-height: 1.6em; }
 

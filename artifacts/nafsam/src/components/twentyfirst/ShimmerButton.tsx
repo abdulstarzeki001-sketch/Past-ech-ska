@@ -16,7 +16,7 @@ interface ShimmerButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
  */
 export default function ShimmerButton({
   children,
-  shimmerColor = "#d8a57c",
+  shimmerColor = "#b9d3e6",
   shimmerDuration = 2.6,
   className = "",
   onPointerMove,

@@ -69,6 +69,20 @@ export default function OrbitMotif() {
 
   return (
     <svg viewBox="0 0 200 200" className="orbit-svg" aria-hidden="true">
+      <defs>
+        <radialGradient id="planet-core" cx="35%" cy="30%" r="75%">
+          <stop offset="0%" stopColor="#8fb3e0" />
+          <stop offset="55%" stopColor="#24427a" />
+          <stop offset="100%" stopColor="#060a18" />
+        </radialGradient>
+        <radialGradient id="planet-halo" cx="50%" cy="50%" r="50%">
+          <stop offset="60%" stopColor="#7d8fd8" stopOpacity="0" />
+          <stop offset="85%" stopColor="#b9d3e6" stopOpacity="0.28" />
+          <stop offset="100%" stopColor="#b9d3e6" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+      <circle cx="100" cy="100" r="92" fill="url(#planet-halo)" />
+      <circle cx="100" cy="100" r="46" fill="url(#planet-core)" />
       <path ref={orbitRef} d={ORBIT} className="orbit-path" fill="none" />
       <path ref={heartRef} d={HEART} className="morph-target" />
       <path ref={starRef} d={STAR} className="morph-star" onPointerEnter={wiggle} />

@@ -188,7 +188,7 @@ export default function Home({ openAt, onLogout }: HomeProps) {
       <section className="hero">
         <Aurora
           className="hero-aurora"
-          colorStops={["#d8a57c", "#3a2a5a", "#16203d"]}
+          colorStops={["#b9d3e6", "#2b3f7a", "#16203d"]}
           amplitude={0.9}
           blend={0.5}
           speed={0.6}
@@ -197,7 +197,7 @@ export default function Home({ openAt, onLogout }: HomeProps) {
         <div className="hero-content">
           <BlurText text="أرشيف قلبين افترقا" animateBy="words" direction="top" delay={120} className="kicker" />
           <h1 className="hero-title">
-            <GradientText colors={["#d8a57c", "#f4efe8", "#d8a57c"]} animationSpeed={6}>
+            <GradientText colors={["#b9d3e6", "#eef4fa", "#b9d3e6"]} animationSpeed={6}>
               لم تنتهِ الحكاية
             </GradientText>
           </h1>
@@ -206,8 +206,8 @@ export default function Home({ openAt, onLogout }: HomeProps) {
             <StarBorder
               as="div"
               className="countdown-card"
-              color="#d8a57c"
-              trailColor="#f4efe8"
+              color="#b9d3e6"
+              trailColor="#eef4fa"
               duration={6}
               thickness={1}
               sparkle
@@ -222,7 +222,7 @@ export default function Home({ openAt, onLogout }: HomeProps) {
           )}
           <Magnet padding={40} magnetStrength={3}>
             <button className="ghost-button hero-cta" onClick={scrollToChapters}>
-              <ShinyText text="ابدأ الرحلة" color="#d8a57c" shineColor="#fffaf0" speed={3} />
+              <ShinyText text="ابدأ الرحلة" color="#b9d3e6" shineColor="#f4f8fc" speed={3} />
             </button>
           </Magnet>
         </div>
@@ -235,7 +235,7 @@ export default function Home({ openAt, onLogout }: HomeProps) {
               className="chapter-glow"
               borderRadius={22}
               backgroundColor="#0b1020"
-              colors={["#d8a57c", "#8a6aa8", "#3c5a9a"]}
+              colors={["#b9d3e6", "#7d8fd8", "#3a5aa0"]}
               fillOpacity={0.6}
             >
               <div className="chapter-inner">
@@ -272,7 +272,7 @@ function Unit({ value, label }: { value: number; label: string }) {
         minDigits={2}
         fontSize={36}
         fontWeight={600}
-        textColor="#f4efe8"
+        textColor="#eef4fa"
         tabular
       />
       <span className="unit-label">{label}</span>

@@ -40,7 +40,7 @@ export default function App() {
   }
 
   return (
-    <ClickSpark sparkColor="#d8a57c" sparkCount={10} sparkRadius={22} duration={500}>
+    <ClickSpark sparkColor="#b9d3e6" sparkCount={10} sparkRadius={22} duration={500}>
       <Noise opacity={0.05} fixed />
       {view}
     </ClickSpark>
