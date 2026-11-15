@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef } from "react";
-import { gsap } from "gsap";
+import { gsap, SplitText } from "@/lib/gsap";
 
 interface SplitWordsProps {
   text: string;
@@ -7,41 +7,39 @@ interface SplitWordsProps {
   delay?: number;
 }
 
-/**
- * Splits a line into words and reveals them one by one with GSAP.
- * Written in the spirit of React Bits' SplitText, not copied from it.
- */
+/** Splits a line into masked words with the SplitText plugin and reveals them. */
 export default function SplitWords({ text, className, delay = 0 }: SplitWordsProps) {
   const ref = useRef<HTMLSpanElement>(null);
 
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
+    let split: SplitText | undefined;
     const ctx = gsap.context(() => {
-      gsap.fromTo(
-        el.querySelectorAll(".split-word"),
-        { yPercent: 110, opacity: 0, filter: "blur(8px)" },
-        {
-          yPercent: 0,
-          opacity: 1,
-          filter: "blur(0px)",
-          duration: 1.1,
-          ease: "power4.out",
-          stagger: 0.08,
-          delay,
-        },
-      );
+      split = SplitText.create(el, {
+        type: "words",
+        mask: "words",
+        wordsClass: "split-word",
+      });
+      gsap.from(split.words, {
+        yPercent: 110,
+        opacity: 0,
+        filter: "blur(8px)",
+        duration: 1.1,
+        ease: "power4.out",
+        stagger: 0.08,
+        delay,
+      });
     }, el);
-    return () => ctx.revert();
+    return () => {
+      ctx.revert();
+      split?.revert();
+    };
   }, [text, delay]);
 
   return (
     <span ref={ref} className={className} aria-label={text}>
-      {text.split(" ").map((word, i) => (
-        <span className="split-mask" key={`${word}-${i}`} aria-hidden="true">
-          <span className="split-word">{word}</span>
-        </span>
-      ))}
+      {text}
     </span>
   );
 }

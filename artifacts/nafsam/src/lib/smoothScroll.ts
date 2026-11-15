@@ -1,8 +1,5 @@
 import Lenis from "lenis";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-
-gsap.registerPlugin(ScrollTrigger);
+import { gsap, ScrollTrigger } from "@/lib/gsap";
 
 /**
  * Starts Lenis smooth scrolling and drives it from GSAP's ticker, so that
@@ -32,5 +29,3 @@ export function startSmoothScroll(): () => void {
     ScrollTrigger.getAll().forEach((t) => t.kill());
   };
 }
-
-export { gsap, ScrollTrigger };
