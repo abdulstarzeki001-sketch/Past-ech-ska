@@ -1,246 +1,48 @@
-import { useState, useEffect, useRef, lazy, Suspense } from "react";
-import {
-  Router as WouterRouter,
-  useLocation,
-  Redirect,
-} from "wouter";
-import { useLang } from "@/hooks/useLang";
-import LanguageSwitcher from "@/components/LanguageSwitcher";
-import { useMagneticButtons } from "@/hooks/useMagneticButtons";
-import { useIdleVignette } from "@/hooks/useIdleVignette";
-import useScrollRestoration from "@/hooks/useScrollRestoration";
-import usePreventPullToRefresh from "@/hooks/usePreventPullToRefresh";
-import Navbar from "@/components/Navbar";
-import CinematicPageTransition from "@/components/CinematicPageTransition";
-import CinematicAtmosphere from "@/components/CinematicAtmosphere";
+import { useEffect, useState } from "react";
 import Login from "@/pages/Login";
-import {
-  fetchSession,
-  broadcastLogout,
-  logout,
-  AUTH_BROADCAST_CHANNEL,
-  STORAGE_LOGOUT_KEY,
-} from "@/lib/auth";
-import {
-  clearPrivateContentCache,
-  setUnauthorizedHandler,
-  revalidatePrivateContent,
-} from "@/hooks/usePrivateContent";
-import { startActivityTracking, logActivity } from "@/lib/activity";
+import Home from "@/pages/Home";
+import { fetchSession, type SessionStatus } from "@/lib/auth";
+import { startSmoothScroll } from "@/lib/smoothScroll";
+import ClickSpark from "@/components/reactbits/ClickSpark";
+import Noise from "@/components/reactbits/Noise";
 
-const Home = lazy(() => import("@/pages/Home"));
-const Photos = lazy(() => import("@/pages/Photos"));
-const Songs = lazy(() => import("@/pages/Songs"));
-const Videos = lazy(() => import("@/pages/Videos"));
-const Writings = lazy(() => import("@/pages/Writings"));
-const Feelings = lazy(() => import("@/pages/Feelings"));
-const Journey = lazy(() => import("@/pages/Journey"));
+type State =
+  | { phase: "checking" }
+  | { phase: "anon"; openAt: number }
+  | { phase: "authed"; openAt: number };
 
-type AuthState = "checking" | "authed" | "anon";
+export default function App() {
+  const [state, setState] = useState<State>({ phase: "checking" });
 
-function ProtectedRoute({
-  state,
-  children,
-}: {
-  state: AuthState;
-  children: React.ReactNode;
-}) {
-  if (state === "checking") return null;
-  if (state !== "authed") return <Redirect to="/" />;
-  return <Suspense fallback={null}>{children}</Suspense>;
-}
+  useEffect(() => startSmoothScroll(), []);
 
-function AppContent() {
-  const { lang, setLang, t } = useLang();
-  const [authState, setAuthState] = useState<AuthState>("checking");
-  const [location] = useLocation();
-  useMagneticButtons();
-  useIdleVignette();
-  useScrollRestoration(location);
-  usePreventPullToRefresh();
-
-  const evictAuthRef = useRef<() => void>(() => {});
-
-  const evictAuth = () => {
-    clearPrivateContentCache();
-    setAuthState("anon");
-  };
-
-  evictAuthRef.current = evictAuth;
-
-  const handleLogout = () => {
-    // Evict auth immediately so protected content is hidden at once,
-    // before the network request settles. The server-side revocation
-    // proceeds in the background regardless of its outcome.
-    evictAuth();
-    broadcastLogout();
-    logout().catch(() => {});
-  };
-
-  const refresh = async (evictIfAnon = false) => {
-    const s = await fetchSession();
-    const next: AuthState = s.authed ? "authed" : "anon";
-    setAuthState((prev) => {
-      if (next !== "authed" && (prev === "authed" || evictIfAnon)) {
-        clearPrivateContentCache();
-        broadcastLogout();
-      }
-      return next;
+  useEffect(() => {
+    let alive = true;
+    fetchSession().then((s: SessionStatus) => {
+      if (!alive) return;
+      setState({ phase: s.authed ? "authed" : "anon", openAt: s.openAt });
     });
-  };
-
-  useEffect(() => {
-    // Validate silently on navigation. Only show "checking" on the very first
-    // load (when we don't yet know auth state); otherwise keep the current
-    // state so navigating between protected pages doesn't blank the screen.
-    let wasAuthed = false;
-    setAuthState((prev) => {
-      wasAuthed = prev === "authed";
-      return prev;
-    });
-    refresh(wasAuthed);
-  }, [location]);
-
-  useEffect(() => {
-    // Once the viewer is authenticated, begin (idempotent) activity tracking and
-    // record which page they are looking at. Fail-silent — never blocks the UI.
-    if (authState === "authed") {
-      startActivityTracking();
-      logActivity("page_view", location);
-    }
-  }, [authState, location]);
-
-  useEffect(() => {
-    // Register the unauthorized handler so that a 401 from any private-content
-    // fetch triggers immediate local eviction without waiting for the next poll.
-    setUnauthorizedHandler(() => evictAuthRef.current());
-
-    const interval = setInterval(() => {
-      // Background poll: validate silently without flipping to "checking",
-      // which would unmount protected routes and cause a visible "pulse".
-      // evictAuth() still fires immediately on 401 via unauthorizedHandler.
-      let wasAuthed = false;
-      setAuthState((prev) => {
-        wasAuthed = prev === "authed";
-        return prev;
-      });
-      refresh(wasAuthed);
-      if (wasAuthed) revalidatePrivateContent();
-    }, 60_000);
-
-    const onVisibility = () => {
-      if (document.visibilityState === "visible") {
-        let wasAuthed = false;
-        setAuthState((prev) => {
-          wasAuthed = prev === "authed";
-          return prev;
-        });
-        refresh(wasAuthed);
-      }
-    };
-    const onFocus = () => {
-      let wasAuthed = false;
-      setAuthState((prev) => {
-        wasAuthed = prev === "authed";
-        return prev;
-      });
-      refresh(wasAuthed);
-    };
-    document.addEventListener("visibilitychange", onVisibility);
-    window.addEventListener("focus", onFocus);
-
-    let channel: BroadcastChannel | null = null;
-    try {
-      channel = new BroadcastChannel(AUTH_BROADCAST_CHANNEL);
-      channel.onmessage = (e) => {
-        if (e.data === "logout") evictAuth();
-      };
-    } catch {
-      // BroadcastChannel not available in this context
-    }
-
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === STORAGE_LOGOUT_KEY) evictAuth();
-    };
-    window.addEventListener("storage", onStorage);
-
     return () => {
-      clearInterval(interval);
-      document.removeEventListener("visibilitychange", onVisibility);
-      window.removeEventListener("focus", onFocus);
-      window.removeEventListener("storage", onStorage);
-      channel?.close();
+      alive = false;
     };
   }, []);
 
-  const renderCurrentPage = () => {
-    switch (location) {
-      case "/":
-        return <Login t={t} lang={lang} onAuth={() => setAuthState("authed")} />;
-      case "/home":
-        return <ProtectedRoute state={authState}><Home t={t} lang={lang} /></ProtectedRoute>;
-      case "/photos":
-        return <ProtectedRoute state={authState}><Photos t={t} lang={lang} /></ProtectedRoute>;
-      case "/journey":
-        return <ProtectedRoute state={authState}><Journey t={t} lang={lang} /></ProtectedRoute>;
-      case "/songs":
-        return <ProtectedRoute state={authState}><Songs t={t} lang={lang} /></ProtectedRoute>;
-      case "/videos":
-        return <ProtectedRoute state={authState}><Videos t={t} lang={lang} /></ProtectedRoute>;
-      case "/writings":
-        return <ProtectedRoute state={authState}><Writings t={t} lang={lang} /></ProtectedRoute>;
-      case "/feelings":
-        return <ProtectedRoute state={authState}><Feelings t={t} lang={lang} /></ProtectedRoute>;
-      default:
-        return <Redirect to="/" />;
-    }
-  };
-
-  const currentPage = renderCurrentPage();
-
-  const body = (
-    <>
-      {authState === "authed" && (
-        <Navbar t={t} lang={lang} onLogout={handleLogout} />
-      )}
-      <main id="main-content">
-        <CinematicPageTransition
-          location={location}
-          enabled={authState === "authed"}
-          routeLabel={{
-            "/": t.page_title_login,
-            "/home": t.nav_home,
-            "/photos": t.nav_photos,
-            "/journey": t.nav_journey,
-            "/songs": t.nav_songs,
-            "/videos": t.nav_videos,
-            "/writings": t.nav_writings,
-            "/feelings": t.nav_feelings,
-          }[location] ?? t.brand}
-        >
-          {currentPage}
-        </CinematicPageTransition>
-      </main>
-    </>
-  );
+  let view = null;
+  if (state.phase === "anon") {
+    view = <Login onAuth={() => setState({ phase: "authed", openAt: state.openAt })} />;
+  } else if (state.phase === "authed") {
+    view = (
+      <Home
+        openAt={state.openAt}
+        onLogout={() => setState({ phase: "anon", openAt: state.openAt })}
+      />
+    );
+  }
 
   return (
-    <div className="app-shell cosmic-ui">
-      <CinematicAtmosphere />
-      <div className={authState === "authed" ? "locale-fixed-auth" : "locale-fixed-login"}>
-        <LanguageSwitcher lang={lang} setLang={setLang} floating />
-      </div>
-      {body}
-    </div>
+    <ClickSpark sparkColor="#b9d3e6" sparkCount={10} sparkRadius={22} duration={500}>
+      <Noise opacity={0.05} fixed />
+      {view}
+    </ClickSpark>
   );
 }
-
-function App() {
-  return (
-    <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-      <AppContent />
-    </WouterRouter>
-  );
-}
-
-export default App;

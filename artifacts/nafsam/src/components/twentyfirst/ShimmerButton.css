@@ -1,0 +1,51 @@
+.shimmer-button {
+  --shimmer-x: 50%;
+  --shimmer-y: 50%;
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  padding: 0.9rem 1.6rem;
+  border-radius: 14px;
+  border: 1px solid rgba(185, 211, 230, 0.45);
+  background: rgba(10, 14, 28, 0.85);
+  color: #eef4fa;
+  font: inherit;
+  cursor: pointer;
+  transition: border-color 0.3s ease, transform 0.2s ease;
+}
+.shimmer-button:hover:not(:disabled) { border-color: var(--shimmer-color); }
+.shimmer-button:active:not(:disabled) { transform: scale(0.98); }
+.shimmer-button:disabled { opacity: 0.45; cursor: default; }
+
+/* Light band that sweeps across the button */
+.shimmer-button__sweep {
+  position: absolute;
+  inset: -50%;
+  background: conic-gradient(from 0deg, transparent 0 70%, var(--shimmer-color) 80%, transparent 90%);
+  animation: shimmer-spin var(--shimmer-duration) linear infinite;
+  opacity: 0.55;
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* Glow that follows the pointer */
+.shimmer-button::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(120px circle at var(--shimmer-x) var(--shimmer-y), rgba(185, 211, 230, 0.25), transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+.shimmer-button:hover::after { opacity: 1; }
+
+.shimmer-button__label { position: relative; z-index: 1; }
+
+@keyframes shimmer-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shimmer-button__sweep { animation: none; }
+}

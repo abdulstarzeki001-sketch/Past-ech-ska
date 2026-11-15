@@ -5,10 +5,7 @@ import path from "path";
 import fs from "fs";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 
-// Static builds: Cloudflare Pages sets CF_PAGES=1; GitHub Actions sets
-// GITHUB_ACTIONS=true. Both must bake in the committed static-mode env
-// (auth token hashes, R2 base) or login fails on the deployed static site.
-if (process.env.CF_PAGES === "1" || process.env.GITHUB_ACTIONS === "true") {
+if (process.env.CF_PAGES === "1") {
   const cfEnvFile = path.resolve(import.meta.dirname, ".env.cloudflare-pages");
   if (fs.existsSync(cfEnvFile)) {
     const lines = fs.readFileSync(cfEnvFile, "utf-8").split("\n");
@@ -29,8 +26,7 @@ if (process.env.CF_PAGES === "1" || process.env.GITHUB_ACTIONS === "true") {
 const isBuild = process.env.NODE_ENV === "production" || process.argv.includes("build");
 
 const port = Number(process.env.PORT || 19579);
-const githubPagesBase = process.env.GITHUB_ACTIONS === "true" ? "/ech-nafasm-ska/" : "/";
-const basePath = process.env.BASE_PATH || githubPagesBase;
+const basePath = process.env.BASE_PATH || "/";
 
 if (!isBuild) {
   if (!process.env.PORT) {

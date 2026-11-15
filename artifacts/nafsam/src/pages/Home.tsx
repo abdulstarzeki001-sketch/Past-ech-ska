@@ -1,125 +1,281 @@
-import { useEffect, useRef, useState } from "react";
-import { Link } from "wouter";
-import { motion } from "framer-motion";
-import { ArrowDown, ArrowUpLeft, ArrowUpRight, BookOpenText, Camera, Film, Headphones, HeartPulse, Sparkles } from "lucide-react";
-import { type Translations, type Lang } from "@/i18n/translations";
-import FarewellPassage from "@/components/FarewellPassage";
-import OblivionScript from "@/components/OblivionScript";
-import Footer from "@/components/Footer";
-import CosmicHeroArt from "@/components/CosmicHeroArt";
-import useCinematicScroll from "@/hooks/useCinematicScroll";
-import usePageAudio from "@/hooks/usePageAudio";
-import { usePrivateContent, pickLangPages } from "@/hooks/usePrivateContent";
-import "@/styles/luxe-home-login.css";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import Snap from "lenis/snap";
+import {
+  gsap,
+  ScrollTrigger,
+  Observer,
+  TextPlugin,
+  archiveEase,
+} from "@/lib/gsap";
+import { getLenis } from "@/lib/smoothScroll";
+import OrbitMotif from "@/components/OrbitMotif";
+import ScrambleTitle from "@/components/ScrambleTitle";
+import DraggableStrip from "@/components/DraggableStrip";
+import FlipLayout from "@/components/FlipLayout";
+import Aurora from "@/components/reactbits/Aurora";
+import BlurText from "@/components/reactbits/BlurText";
+import GradientText from "@/components/reactbits/GradientText";
+import ShinyText from "@/components/reactbits/ShinyText";
+import Magnet from "@/components/reactbits/Magnet";
+import StarBorder from "@/components/reactbits/StarBorder";
+import Counter from "@/components/reactbits/Counter";
+import BorderGlow from "@/components/reactbits/BorderGlow";
+import { logout } from "@/lib/auth";
 
-const START = new Date("2025-08-20T04:04:00");
-function elapsed(now: Date) {
-  const s = Math.max(0, Math.floor((now.getTime() - START.getTime()) / 1000));
-  return { days: Math.floor(s / 86400), hours: Math.floor((s % 86400) / 3600), minutes: Math.floor((s % 3600) / 60), seconds: s % 60 };
+interface HomeProps {
+  openAt: number;
+  onLogout: () => void;
 }
-const pad = (n: number) => String(n).padStart(2, "0");
 
-interface Props { t: Translations; lang: Lang; }
-export default function Home({ t, lang }: Props) {
-  const data = usePrivateContent();
-  const p = pickLangPages(data, lang);
-  usePageAudio(data?.pageAudio?.home ?? "");
-  const root = useRef<HTMLDivElement>(null);
-  useCinematicScroll(root);
-  const [time, setTime] = useState(() => elapsed(new Date()));
+function useCountdown(target: number) {
+  const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
-    const interval = window.setInterval(() => setTime(elapsed(new Date())), 1000);
-    return () => window.clearInterval(interval);
+    const id = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(id);
+  }, []);
+  const diff = Math.max(0, target - now);
+  const s = Math.floor(diff / 1000);
+  return {
+    done: diff <= 0,
+    days: Math.floor(s / 86400),
+    hours: Math.floor((s % 86400) / 3600),
+    minutes: Math.floor((s % 3600) / 60),
+    seconds: s % 60,
+  };
+}
+
+const CHAPTERS = [
+  { title: "البداية", body: "كل حكاية تبدأ بلحظة صغيرة تبقى عالقة في الذاكرة." },
+  { title: "المسافة", body: "بين قلبين مسافة، وبين المسافة كلمات لم تُقل بعد." },
+  { title: "الوعد", body: "ما انتهى شيء طالما بقي أحدهما يتذكّر." },
+];
+
+const MEMORIES = [
+  { title: "ليلة الشتاء", body: "حديث طويل تحت مطر خفيف، والوقت لم يكن يهم." },
+  { title: "رسالة صباحية", body: "أول كلمة في اليوم، وآخر كلمة قبل النوم." },
+  { title: "الطريق", body: "خطوات متوازية على طريقين مختلفين." },
+  { title: "الصورة", body: "لحظة توقفت ولم تُنسَ أبداً." },
+];
+
+const MILESTONES = [
+  { title: "أول لقاء", body: "البداية التي لم تكن تعرف أنها بداية." },
+  { title: "أطول غياب", body: "الأيام التي مرّت ببطء ثقيل." },
+  { title: "العودة", body: "حين التقت الطرق من جديد." },
+  { title: "الآن", body: "ما زالت الحكاية مفتوحة." },
+];
+
+const easeOutQuart = (t: number) => 1 - Math.pow(1 - t, 4);
+
+export default function Home({ openAt, onLogout }: HomeProps) {
+  const rootRef = useRef<HTMLDivElement>(null);
+  const topbarRef = useRef<HTMLElement>(null);
+  const glowRef = useRef<HTMLDivElement>(null);
+  const footerRef = useRef<HTMLParagraphElement>(null);
+  const countdown = useCountdown(openAt);
+
+  // Entrance timeline with the custom archive ease, plus scroll reveals.
+  useLayoutEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+    const ctx = gsap.context(() => {
+      gsap
+        .timeline({ defaults: { ease: archiveEase } })
+        .from(".orbit-svg", { opacity: 0, scale: 0.8, duration: 1.4 }, 0.2)
+        .from(".hero-cta", { opacity: 0, y: 16, duration: 0.8 }, "-=0.8");
+
+      gsap.from(".chapter", {
+        opacity: 0,
+        y: 60,
+        duration: 1,
+        ease: "power3.out",
+        stagger: 0.15,
+        scrollTrigger: { trigger: ".chapters", start: "top 80%" },
+      });
+    }, root);
+    ScrollTrigger.refresh();
+    return () => ctx.revert();
   }, []);
 
-  const archive = [
-    { href: "/photos", label: t.card_photos_title, desc: p.card_photos_text, icon: Camera, num: "01" },
-    { href: "/journey", label: t.card_moments_title, desc: p.card_moments_text, icon: Sparkles, num: "02" },
-    { href: "/videos", label: t.nav_videos, desc: p.videos_text, icon: Film, num: "03" },
-    { href: "/songs", label: t.card_songs_title, desc: p.card_songs_text, icon: Headphones, num: "04" },
-    { href: "/writings", label: t.card_writings_title, desc: p.card_writings_text, icon: BookOpenText, num: "05" },
-    { href: "/feelings", label: t.nav_feelings, desc: p.footer_text, icon: HeartPulse, num: "06" },
-  ];
-  const entrance = { initial: { opacity: 0, y: 22 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.85, ease: "easeOut" as const } };
+  // Topbar hides on scroll down and returns on scroll up (Observer).
+  useEffect(() => {
+    const bar = topbarRef.current;
+    if (!bar) return;
+    const obs = Observer.create({
+      type: "wheel,touch",
+      tolerance: 12,
+      onDown: () => gsap.to(bar, { yPercent: -100, duration: 0.5, ease: "power3.out", overwrite: true }),
+      onUp: () => gsap.to(bar, { yPercent: 0, duration: 0.5, ease: "power3.out", overwrite: true }),
+    });
+    return () => obs.kill();
+  }, []);
+
+  // Soft glow that follows the pointer (quickTo for smooth, cheap updates).
+  useEffect(() => {
+    const glow = glowRef.current;
+    if (!glow) return;
+    gsap.set(glow, { xPercent: -50, yPercent: -50 });
+    const qx = gsap.quickTo(glow, "x", { duration: 1.4, ease: "power3.out" });
+    const qy = gsap.quickTo(glow, "y", { duration: 1.4, ease: "power3.out" });
+    const move = (e: PointerEvent) => {
+      qx((e.clientX - window.innerWidth / 2) * 0.15);
+      qy((e.clientY - window.innerHeight / 2) * 0.15);
+    };
+    window.addEventListener("pointermove", move);
+    return () => window.removeEventListener("pointermove", move);
+  }, []);
+
+  // Footer line types itself in once it scrolls into view (TextPlugin).
+  useEffect(() => {
+    const el = footerRef.current;
+    if (!el) return;
+    const st = ScrollTrigger.create({
+      trigger: el,
+      start: "top 90%",
+      once: true,
+      onEnter: () =>
+        gsap.to(el, {
+          duration: 2.2,
+          ease: "none",
+          text: { value: "ما زالت الحكاية تُكتب…", delimiter: "" },
+        }),
+    });
+    return () => st.kill();
+  }, []);
+
+  // Lenis scrolls to the chapters; the native API is the fallback if Lenis is absent.
+  const scrollToChapters = () => {
+    const lenis = getLenis();
+    if (lenis) {
+      lenis.scrollTo("#chapters", {
+        offset: -40,
+        duration: 1.4,
+        easing: easeOutQuart,
+        lock: true,
+        userData: { source: "cta" },
+      });
+    } else {
+      document.getElementById("chapters")?.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
+  // Lenis snap: gently settles the chapters into view when the scroll pauses.
+  useEffect(() => {
+    const lenis = getLenis();
+    if (!lenis) return;
+    lenis.scrollTo("top", { immediate: true, force: true });
+    const snap = new Snap(lenis, { type: "proximity", distanceThreshold: "30%", debounce: 400 });
+    snap.addElements(Array.from(document.querySelectorAll<HTMLElement>(".chapter")), {
+      align: ["start"],
+    });
+    return () => snap.destroy();
+  }, []);
+
+  const handleLogout = async () => {
+    await logout();
+    onLogout();
+  };
 
   return (
-    <div className="page-content home-page cinema-home" ref={root}>
-      <section className="hero cinema-hero">
-        <div className="cinema-hero__frame">
-          <motion.div className="cinema-hero__copy" {...entrance}>
-            <div className="cinema-eyebrow"><span className="cinema-pulse" /> <span>NAFSAM / PRIVATE UNIVERSE</span><span className="cinema-eyebrow__line" /></div>
-            <p className="cinema-hero__index">A STORY WRITTEN IN STARS — 2025 / ∞</p>
-            <h1 className="cinema-hero__title">{t.hero_title}<span className="cinema-hero__title-orbit">✦</span></h1>
-            <p className="cinema-hero__lede">{p.hero_text || t.hero_eyebrow}</p>
-            <div className="cinema-hero__actions">
-              <Link className="cinema-action cinema-action--primary" href="/journey">{t.open_story} <ArrowUpLeft size={18} /></Link>
-              <Link className="cinema-action cinema-action--ghost" href="/photos">{t.nav_photos} <ArrowUpRight size={17} /></Link>
-            </div>
-            <div className="cinema-live-counter" aria-label="Time elapsed since August 20, 2025">
-              <span className="cinema-live-counter__title">SINCE THE BEGINNING <span className="cinema-live-counter__live" /></span>
-              <div className="cinema-live-counter__units">
-                <span><strong>{time.days}</strong><small>{t.countdown_day}</small></span>
-                <i />
-                <span><strong>{pad(time.hours)}</strong><small>{t.countdown_hour}</small></span>
-                <i />
-                <span><strong>{pad(time.minutes)}</strong><small>{t.countdown_minute}</small></span>
-                <i />
-                <span><strong>{pad(time.seconds)}</strong><small>{t.countdown_second}</small></span>
+    <div ref={rootRef} className="home">
+      <div className="scroll-progress" aria-hidden="true" />
+      <header ref={topbarRef} className="topbar">
+        <span className="brand">Nafsam</span>
+        <button className="ghost-button" onClick={handleLogout}>
+          خروج
+        </button>
+      </header>
+
+      <section className="hero">
+        <Aurora
+          className="hero-aurora"
+          colorStops={["#b9d3e6", "#2b3f7a", "#16203d"]}
+          amplitude={0.9}
+          blend={0.5}
+          speed={0.6}
+        />
+        <div ref={glowRef} className="hero-glow" aria-hidden="true" />
+        <div className="hero-content">
+          <BlurText text="أرشيف قلبين افترقا" animateBy="words" direction="top" delay={120} className="kicker" />
+          <h1 className="hero-title">
+            <GradientText colors={["#b9d3e6", "#eef4fa", "#b9d3e6"]} animationSpeed={6}>
+              لم تنتهِ الحكاية
+            </GradientText>
+          </h1>
+          <OrbitMotif />
+          {!countdown.done && (
+            <StarBorder
+              as="div"
+              className="countdown-card"
+              color="#b9d3e6"
+              trailColor="#eef4fa"
+              duration={6}
+              thickness={1}
+              sparkle
+            >
+              <div className="countdown">
+                <Unit value={countdown.days} label="يوم" />
+                <Unit value={countdown.hours} label="ساعة" />
+                <Unit value={countdown.minutes} label="دقيقة" />
+                <Unit value={countdown.seconds} label="ثانية" />
               </div>
-            </div>
-          </motion.div>
-          <CosmicHeroArt />
-        </div>
-        <a className="cinema-scroll-hint" href="#cinema-archive"><ArrowDown size={15} /> <span>EXPLORE THE ARCHIVE</span></a>
-        <div className="cinema-hero__edge-tag">EST. MMXXV — INFINITY</div>
-      </section>
-
-      {(p.farewell_title || p.oblivion_name) && (
-        <section className="cinema-interlude cinema-scroll-reveal">
-          <span className="cinema-section-number">00 / THE STORY</span>
-          <div className="cinema-interlude__layout">
-            <div className="cinema-interlude__aside">
-              <span className="cinema-star-symbol">✳</span>
-              <p>EVERY MEMORY<br />HAS AN ORBIT.</p>
-            </div>
-            <div className="cinema-interlude__text">
-              {p.farewell_title && (
-                <FarewellPassage
-                  title={p.farewell_title}
-                  paragraphs={[p.farewell_p1 ?? "", p.farewell_p2 ?? "", p.farewell_p3 ?? "", p.farewell_p4 ?? ""].filter(Boolean)}
-                  silverAnchor={p.farewell_silver_anchor ?? ""}
-                  memoryPattern={p.farewell_memory_pattern ?? ""}
-                  dir={t.dir}
-                  lang={lang}
-                />
-              )}
-              {p.oblivion_name && (
-                <OblivionScript name={p.oblivion_name} hint={p.oblivion_hint ?? ""} revealed={p.oblivion_revealed ?? ""} dir={t.dir} lang={lang} />
-              )}
-            </div>
-          </div>
-        </section>
-      )}
-
-      <section className="cinema-archive" id="cinema-archive">
-        <div className="cinema-section-heading cinema-scroll-reveal">
-          <div><span className="cinema-section-number">01 / THE COLLECTION</span><h2>{t.brand}<em> / </em>{t.open_story}</h2></div>
-          <p>{p.card_moments_text || t.hero_eyebrow}</p>
-        </div>
-        <div className="cinema-archive__grid">
-          {archive.map(({ href, label, desc, icon: Icon, num }) => (
-            <Link href={href} key={href} className="cinema-archive-card cinema-scroll-reveal">
-              <div className="cinema-archive-card__top"><span>{num} / 06</span><ArrowUpRight size={18} /></div>
-              <div className="cinema-archive-card__icon"><Icon size={27} strokeWidth={1.2} /></div>
-              <h3>{label}</h3>
-              <p>{desc || t.hero_eyebrow}</p>
-              <span className="cinema-archive-card__index">N — {num}</span>
-            </Link>
-          ))}
+            </StarBorder>
+          )}
+          <Magnet padding={40} magnetStrength={3}>
+            <button className="ghost-button hero-cta" onClick={scrollToChapters}>
+              <ShinyText text="ابدأ الرحلة" color="#b9d3e6" shineColor="#f4f8fc" speed={3} />
+            </button>
+          </Magnet>
         </div>
       </section>
-      <div className="cinema-endnote"><span>✦</span><p>{p.footer_text || t.brand}</p><span>∞</span></div>
-      {p.footer_text && <Footer text={p.footer_text} />}
+
+      <section id="chapters" className="chapters">
+        {CHAPTERS.map((c) => (
+          <article className="chapter" key={c.title}>
+            <BorderGlow
+              className="chapter-glow"
+              borderRadius={22}
+              backgroundColor="#0b1020"
+              colors={["#b9d3e6", "#7d8fd8", "#3a5aa0"]}
+              fillOpacity={0.6}
+            >
+              <div className="chapter-inner">
+                <ScrambleTitle text={c.title} className="chapter-title" />
+                <p>{c.body}</p>
+              </div>
+            </BorderGlow>
+          </article>
+        ))}
+      </section>
+
+      <section className="block">
+        <h3 className="section-label">ذكريات تُسحب</h3>
+        <DraggableStrip items={MEMORIES} />
+      </section>
+
+      <section className="block">
+        <h3 className="section-label">المحطات</h3>
+        <FlipLayout items={MILESTONES} />
+      </section>
+
+      <footer className="site-footer">
+        <p ref={footerRef} className="footer-typed" />
+      </footer>
+    </div>
+  );
+}
+
+function Unit({ value, label }: { value: number; label: string }) {
+  return (
+    <div className="unit">
+      <Counter
+        value={value}
+        minDigits={2}
+        fontSize={36}
+        fontWeight={600}
+        textColor="#eef4fa"
+        tabular
+      />
+      <span className="unit-label">{label}</span>
     </div>
   );
 }
