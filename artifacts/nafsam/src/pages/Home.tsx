@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import Snap from "lenis/snap";
 import {
   gsap,
   ScrollTrigger,
@@ -6,6 +7,7 @@ import {
   TextPlugin,
   archiveEase,
 } from "@/lib/gsap";
+import { getLenis } from "@/lib/smoothScroll";
 import SplitWords from "@/components/SplitWords";
 import SpotlightCard from "@/components/SpotlightCard";
 import ScrambleTitle from "@/components/ScrambleTitle";
@@ -41,6 +43,8 @@ const CHAPTERS = [
   { title: "المسافة", body: "بين قلبين مسافة، وبين المسافة كلمات لم تُقل بعد." },
   { title: "الوعد", body: "ما انتهى شيء طالما بقي أحدهما يتذكّر." },
 ];
+
+const easeOutQuart = (t: number) => 1 - Math.pow(1 - t, 4);
 
 const MEMORIES = [
   { title: "ليلة الشتاء", body: "حديث طويل تحت مطر خفيف، والوقت لم يكن يهم." },
@@ -133,9 +137,33 @@ export default function Home({ openAt, onLogout }: HomeProps) {
     return () => st.kill();
   }, []);
 
+  // Lenis scrolls to the chapters; the native API is the fallback if Lenis is absent.
   const scrollToChapters = () => {
-    gsap.to(window, { duration: 1.4, ease: archiveEase, scrollTo: { y: "#chapters", offsetY: 40 } });
+    const lenis = getLenis();
+    if (lenis) {
+      lenis.scrollTo("#chapters", {
+        offset: -40,
+        duration: 1.4,
+        easing: easeOutQuart,
+        lock: true,
+        userData: { source: "cta" },
+      });
+    } else {
+      document.getElementById("chapters")?.scrollIntoView({ behavior: "smooth" });
+    }
   };
+
+  // Lenis snap: gently settles the chapters into view when the scroll pauses.
+  useEffect(() => {
+    const lenis = getLenis();
+    if (!lenis) return;
+    lenis.scrollTo("top", { immediate: true, force: true });
+    const snap = new Snap(lenis, { type: "proximity", distanceThreshold: "30%", debounce: 400 });
+    snap.addElements(Array.from(document.querySelectorAll<HTMLElement>(".chapter")), {
+      align: ["start"],
+    });
+    return () => snap.destroy();
+  }, []);
 
   const handleLogout = async () => {
     await logout();
@@ -144,6 +172,7 @@ export default function Home({ openAt, onLogout }: HomeProps) {
 
   return (
     <div ref={rootRef} className="home">
+      <div className="scroll-progress" aria-hidden="true" />
       <header ref={topbarRef} className="topbar">
         <span className="brand">Nafsam</span>
         <button className="ghost-button" onClick={handleLogout}>

@@ -1,12 +1,16 @@
 import { useLayoutEffect, useRef } from "react";
 import { gsap, Draggable } from "@/lib/gsap";
+import { getLenis } from "@/lib/smoothScroll";
 
 interface StripItem {
   title: string;
   body: string;
 }
 
-/** Horizontal strip that can be dragged or thrown; momentum comes from InertiaPlugin. */
+/**
+ * Horizontal strip that can be dragged or thrown; momentum comes from InertiaPlugin.
+ * Lenis is paused while the pointer is held so the page does not scroll mid-drag.
+ */
 export default function DraggableStrip({ items }: { items: StripItem[] }) {
   const viewportRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
@@ -24,9 +28,14 @@ export default function DraggableStrip({ items }: { items: StripItem[] }) {
       edgeResistance: 0.8,
       cursor: "grab",
       activeCursor: "grabbing",
+      onPress: () => getLenis()?.stop(),
+      onRelease: () => getLenis()?.start(),
     });
 
-    return () => drag.forEach((d) => d.kill());
+    return () => {
+      getLenis()?.start();
+      drag.forEach((d) => d.kill());
+    };
   }, []);
 
   return (
@@ -42,4 +51,3 @@ export default function DraggableStrip({ items }: { items: StripItem[] }) {
     </div>
   );
 }
-

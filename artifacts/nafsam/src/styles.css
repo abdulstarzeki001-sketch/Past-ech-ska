@@ -146,6 +146,19 @@ body {
 .chapter h2 { margin: 0 0 0.6rem; color: var(--gold); font-weight: 600; }
 .chapter p { margin: 0; color: var(--muted); line-height: 1.9; font-size: 1.1rem; }
 
+/* Lenis scroll progress bar (set by smoothScroll.ts) */
+.scroll-progress {
+  position: fixed;
+  top: 0;
+  inset-inline: 0;
+  height: 2px;
+  background: var(--gold);
+  transform-origin: left center;
+  transform: scaleX(var(--scroll-progress, 0));
+  z-index: 20;
+  pointer-events: none;
+}
+
 /* Orbit motif (OrbitMotif) */
 .orbit-svg { width: min(320px, 70vw); height: auto; margin: 2rem auto 2.5rem; overflow: visible; }
 .orbit-path { stroke: var(--gold); stroke-width: 0.8; opacity: 0.5; }
