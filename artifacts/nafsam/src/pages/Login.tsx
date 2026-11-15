@@ -3,6 +3,7 @@ import { login } from "@/lib/auth";
 import SplitWords from "@/components/SplitWords";
 import SpotlightCard from "@/components/SpotlightCard";
 import Magnet from "@/components/reactbits/Magnet";
+import ShimmerButton from "@/components/twentyfirst/ShimmerButton";
 
 interface LoginProps {
   onAuth: () => void;
@@ -52,9 +53,9 @@ export default function Login({ onAuth }: LoginProps) {
             aria-label="الجواب"
           />
           <Magnet padding={30} magnetStrength={2}>
-            <button className="login-button" type="submit" disabled={busy || !answer.trim()}>
+            <ShimmerButton className="login-button" type="submit" disabled={busy || !answer.trim()}>
               {busy ? "..." : "دخول"}
-            </button>
+            </ShimmerButton>
           </Magnet>
         </form>
         {error && (
